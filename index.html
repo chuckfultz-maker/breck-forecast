@@ -5,107 +5,117 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Breckenridge Snow Forecast</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* VOICE: a ski patrol's morning board: terse, numeric, trustworthy
-   IDEA: the snow-report sign at the base of Peak 9, but honest about ranges
-   PICTURE: the mountain profile with base/mid/summit totals and the snow line
-   COLOUR and TYPE: snow white, granite ink, glacier blue for snow, trail-map red for wind; Barlow Condensed signage
-   LAYOUT: finding + mountain first, then 48h hourly, days 1-3, days 4-7, model check */
+/* VOICE: a forecast desk briefing: factual, dense, calm
+   IDEA: a newspaper weather table plus one precise chart
+   PICTURE: the 48-hour chart (snow bars, temperature lines, wind band) and the 7-day range bars
+   COLOUR and TYPE: white and graphite, one glacier blue for snow, red only for wind holds; Inter with tabular figures
+   LAYOUT: title and summary, four key figures, 7-day table, 48-hour chart, model check, methodology */
 :root{color-scheme:light dark;
---bg:light-dark(#f5f7f9,#0f1317);--card:light-dark(#ffffff,#171c22);--ink:light-dark(#121619,#e9eef2);
---mute:light-dark(#5b6670,#97a3ad);--line:light-dark(#dde3e8,#2a323a);--snow:light-dark(#1d63d8,#6aa8ff);
---snow2:light-dark(#cfe0fb,#1e3556);--red:light-dark(#c8102e,#ff6b6b);--rock:light-dark(#3a434b,#56626d);--rock2:light-dark(#8b96a0,#33404b)}
+--bg:light-dark(#ffffff,#111417);--panel:light-dark(#f6f8fa,#171b1f);--ink:light-dark(#14181c,#e8ecef);--mute:light-dark(#5d6873,#98a2ac);
+--rule:light-dark(#e3e7eb,#2a3138);--rule2:light-dark(#c9d0d6,#3a434b);--blue:light-dark(#0f5fb3,#6aa6ef);--blue2:light-dark(#cfe0f5,#1f3a5c);
+--red:light-dark(#b42318,#ff7a6e);--red2:light-dark(#f6d5d1,#4a2320);--t1:light-dark(#8a96a1,#7f8a94);--t2:light-dark(#14181c,#e8ecef)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif;overflow-x:clip}
-h1,h2,.big,.num{font-family:"Barlow Condensed",Barlow,sans-serif}
-h1{font-size:clamp(32px,6vw,52px);line-height:1.05;margin:4px 0 8px;text-wrap:balance;font-weight:700}
-h2{font-size:28px;margin:0 0 4px;font-weight:700}
-.band{padding:clamp(20px,4vw,48px) max(5vw,16px);max-width:1240px;margin:0 auto}
-.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:28px;align-items:center}
-.sub{color:var(--mute);font-size:15px}
-.fig{position:relative;min-height:300px}.fig>svg{position:absolute;inset:0;width:100%;height:100%}
-.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-button{font:600 15px Barlow,sans-serif;min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
-button:focus-visible{outline:3px solid var(--snow);outline-offset:2px}
-.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:14px;font-weight:600;background:var(--snow2);color:var(--ink);white-space:nowrap}
-.pill.red{background:var(--red);color:#fff}
-.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
-.card h3{margin:0;font:700 22px "Barlow Condensed",sans-serif}
-.big{font-size:44px;font-weight:700;line-height:1;color:var(--snow);white-space:nowrap}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:15px;margin-top:10px}
-.kv span:nth-child(odd){color:var(--mute)}
-.meter{height:10px;border-radius:5px;background:var(--line);position:relative;margin:12px 0 4px}
-.meter i{position:absolute;top:0;bottom:0;border-radius:5px;background:var(--snow)}
-.meter b{position:absolute;top:-4px;width:3px;height:18px;background:var(--ink);border-radius:2px}
-table{border-collapse:collapse;width:100%;font-size:15px}
-th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
-th{font-weight:600;color:var(--mute);font-size:13px}th:first-child,td:first-child{text-align:left}
-td.hot{color:var(--red);font-weight:600}td.sn{color:var(--snow);font-weight:600}
-tr.day td{background:var(--bg);font-weight:600;text-align:left;color:var(--mute);font-size:13px}
-pre,.scroll{overflow-x:auto}
-.scroll{max-height:560px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
-.scroll thead th{position:sticky;top:0;background:var(--card)}
-.note{font-size:14px;color:var(--mute);max-width:70ch}
-#status{font-size:14px;color:var(--mute)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,-apple-system,sans-serif;font-feature-settings:"tnum" 1,"cv11" 1;overflow-x:clip}
+.wrap{max-width:1180px;margin:0 auto;padding:0 max(4vw,16px)}
+header{border-bottom:1px solid var(--rule);padding:28px 0 22px}
+.over{color:var(--mute);font-size:13px;margin:0 0 6px}
+h1{font-size:clamp(26px,3.4vw,34px);line-height:1.1;margin:0 0 10px;font-weight:700;letter-spacing:-.01em}
+#summary{font-size:17px;max-width:70ch;margin:0 0 12px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;color:var(--mute);font-size:13px}
+.meta a{color:var(--blue);text-decoration:none;font-weight:600;padding:10px 0}.meta a:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--rule)}
+.kpi{padding:18px 16px 18px 0;border-right:1px solid var(--rule);margin-right:16px}.kpi:last-child{border-right:0;margin-right:0}
+.kl{font-size:13px;color:var(--mute)}.kv{font-size:30px;font-weight:700;line-height:1.15;margin:2px 0;white-space:nowrap}.ks{font-size:13px;color:var(--mute)}
+.kpi.warn .kv{color:var(--red)}
+section{padding:30px 0 6px}
+h2{font-size:19px;margin:0 0 4px;font-weight:700}
+.note{color:var(--mute);font-size:13px;margin:0 0 12px;max-width:80ch}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font-weight:600;color:var(--mute);font-size:12px;text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule2);white-space:nowrap;vertical-align:bottom}
+td{padding:9px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
+.num{text-align:right}th.num{text-align:right}
+td.day{font-weight:600}td.main{font-weight:700;font-size:16px}
+tr.lo td{color:var(--mute)}tr.lo td.main{color:var(--ink);font-weight:600}
+tr.sep td{background:var(--panel);color:var(--mute);font-size:12px;font-weight:600;padding:6px 10px}
+tr.tot td{font-weight:700;color:var(--blue);border-top:1px solid var(--rule2)}
+td.hot{color:var(--red);font-weight:600}
+.barc{width:120px;min-width:100px}
+.rb{position:relative;height:8px;background:var(--rule);border-radius:4px}
+.rb i{position:absolute;top:0;bottom:0;background:var(--blue2);border-radius:4px}
+.rb b{position:absolute;top:-4px;width:3px;height:16px;margin-left:-1.5px;background:var(--blue);border-radius:1px}
+.flag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:600;background:var(--red);color:#fff}
+.flag.soft{background:var(--red2);color:var(--red)}
+.scroll{overflow-x:auto}
+.fig{position:relative;height:300px}.fig>svg{position:absolute;inset:0;width:100%;height:100%}
+.grid{stroke:var(--rule)}.mid{stroke:var(--rule2);stroke-dasharray:3 3}
+.ax{font-size:11px;fill:var(--mute)}.ax.b{font-weight:600;fill:var(--ink)}
+.sb{fill:var(--blue)}.tl1{fill:none;stroke:var(--t1);stroke-width:1.6}.tl2{fill:none;stroke:var(--t2);stroke-width:1.6}
+.g1{fill:var(--rule)}.g2{fill:var(--red2)}.g3{fill:var(--red)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--mute);margin:8px 0 0}
+.legend i{display:inline-block;width:14px;height:10px;margin-right:6px;vertical-align:-1px;border-radius:2px}
+.legend .ln{height:2px;vertical-align:3px}
+details{border-top:1px solid var(--rule);margin-top:14px}
+summary{cursor:pointer;padding:12px 0;font-weight:600;font-size:14px;color:var(--blue);min-height:44px;display:flex;align-items:center}
+summary:focus-visible{outline:2px solid var(--blue)}
+.meth p{max-width:78ch;margin:0 0 12px}
+.meth table{max-width:620px;margin:6px 0 16px}
+footer{border-top:1px solid var(--rule);margin-top:34px;padding:18px 0 40px;color:var(--mute);font-size:12px}
 .err{color:var(--red)}
-@media(max-width:900px){.grid4{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:700px){.top{grid-template-columns:minmax(0,1fr)}.grid3{grid-template-columns:minmax(0,1fr)}.fig{min-height:260px}}
-@media(max-width:600px){table{font-size:13px}th,td{padding:6px 6px}.big{font-size:38px}}
-@media(prefers-reduced-motion:no-preference){.meter i{transition:width .6s}}
+@media(max-width:820px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi:nth-child(2){border-right:0;margin-right:0}.kpi:nth-child(-n+2){border-bottom:1px solid var(--rule)}}
+@media(max-width:600px){.kv{font-size:24px}table{font-size:13px}td,th{padding:7px 7px}.fig{height:240px}
+ .wk td:first-child,.wk th:first-child{position:sticky;left:0;background:var(--bg);z-index:1}}
 </style>
 </head>
 <body>
-<section class="band top">
-  <div>
-    <div class="sub">Breckenridge Ski Area · base 9,600′ · mid 11,000′ · summit 12,800′</div>
-    <h1 id="headline">Loading the latest model runs…</h1>
-    <p id="lede" class="sub"></p>
-    <div class="row"><button id="refresh">Refresh models</button><span id="status"></span></div>
-  </div>
-  <div class="fig" id="mtnFig"><svg id="mtn" role="img" aria-label="Mountain profile with snow totals by elevation"></svg></div>
-</section>
+<header><div class="wrap">
+  <p class="over">Breckenridge Ski Area · base 9,600′ · mid-mountain 11,000′ · summit 12,800′</p>
+  <h1>Breckenridge Snow Forecast</h1>
+  <p id="summary">Loading the latest model runs…</p>
+  <div class="meta"><span id="status"></span><a href="#" id="refresh">Refresh</a></div>
+</div></header>
 
-<section class="band">
-  <h2>Next 48 hours</h2>
-  <p class="sub">Hourly snow at mid-mountain and summit, temperatures (°F) at base and top, and summit gusts (mph). Upper lifts often go on wind hold when gusts pass 45 mph.</p>
-  <div class="fig" style="min-height:220px"><svg id="hourChart" role="img" aria-label="Hourly snowfall chart"></svg></div>
-  <div class="sub" style="font-size:13px">Bars: snow per hour, mid-mountain. Strip under the bars: summit gusts (grey under 35 mph, light red 35–45, red 45+).</div>
-  <div class="scroll" style="margin-top:14px"><table><thead><tr><th>Time</th><th>Snow mid</th><th>Snow top</th><th>Base</th><th>Top</th><th>Top gust</th><th>Snow line</th></tr></thead><tbody id="hourly"></tbody></table></div>
-</section>
+<div class="wrap">
+  <div class="kpis" id="kpis"></div>
 
-<section class="band">
-  <h2>Next 3 mornings</h2>
-  <p class="sub">Each card covers the 24 hours ending at the 5 AM snow report, which is the same window Breck reports. The bar shows the 10–90% range; the tick is the blended forecast.</p>
-  <div class="grid3" id="days13"></div>
-</section>
+  <section>
+    <h2>Seven-day outlook</h2>
+    <p class="note">Each row is the 24 hours ending at the 5 AM snow report, the same window Breck reports. Snow is at mid-mountain unless noted; “top” is the summit, gusts in mph, and 1″+ / 6″+ are ensemble odds. The bar shows the 10–90% range from 82 ensemble runs plus the individual models; the tick is this forecast.</p>
+    <div class="scroll"><table class="wk"><thead><tr><th>Report</th><th class="num">Mid-mtn</th><th>Range</th><th class="num">10–90%</th><th class="num">1″+</th><th class="num">6″+</th><th class="num">Base / Top</th><th class="num">Ratio</th><th class="num">Base hi / Top lo</th><th class="num">Top gust</th><th class="num">NWS</th></tr></thead><tbody id="week"></tbody></table></div>
+  </section>
 
-<section class="band">
-  <h2>Days 4–7</h2>
-  <p class="sub">At this range one number isn't reliable, so these show odds from 82 ensemble runs (GFS and ECMWF ensembles) at mid-mountain.</p>
-  <div class="grid4" id="days47"></div>
-</section>
+  <section>
+    <h2>Next 48 hours</h2>
+    <p class="note">Hourly snowfall at mid-mountain, temperatures at base and summit, and summit wind gusts. Upper lifts often go on wind hold when gusts pass 45 mph.</p>
+    <div class="fig"><svg id="hourChart" role="img" aria-label="Hourly snowfall, temperature and wind for the next 48 hours"></svg></div>
+    <div class="legend"><span><i style="background:var(--blue)"></i>Snow per hour, mid-mountain (left axis)</span><span><i class="ln" style="background:var(--t2)"></i>Summit temperature</span><span><i class="ln" style="background:var(--t1)"></i>Base temperature (right axis)</span><span><i style="background:var(--rule)"></i>Gusts under 35</span><span><i style="background:var(--red2)"></i>35–45</span><span><i style="background:var(--red)"></i>45+ mph</span></div>
+    <details><summary>Hourly detail</summary>
+      <div class="scroll"><table><thead><tr><th>Hour</th><th class="num">Snow, mid</th><th class="num">Snow, summit</th><th class="num">Base °F</th><th class="num">Summit °F</th><th class="num">Summit gust</th><th class="num">Snow line</th></tr></thead><tbody id="hourly"></tbody></table></div>
+    </details>
+  </section>
 
-<section class="band">
-  <h2>Model check</h2>
-  <p class="sub">Mid-mountain snow from each model for each report morning, all using the same snow-ratio math. If the models disagree a lot, trust the range rather than the single number.</p>
-  <div class="scroll" style="max-height:none"><table><thead id="mhead"></thead><tbody id="mbody"></tbody></table></div>
-</section>
+  <section>
+    <h2>Model comparison</h2>
+    <p class="note">Mid-mountain snow by report morning from each model after its Breckenridge correction, all run through the same snow-ratio math. When the rows disagree widely, rely on the range.</p>
+    <div class="scroll"><table><thead id="mhead"></thead><tbody id="mbody"></tbody></table></div>
+  </section>
 
-<section class="band">
-  <h2>How this forecast works</h2>
-  <div class="note">
-    <p><b>Three elevations.</b> Each model is sampled at the grid cell nearest the base, mid-mountain and summit, with temperatures adjusted to the true elevation. Mid-mountain is calibrated to match Breck's own snow reports.</p>
-    <div id="calNotes"></div>
-    <p><b>What history says about errors.</b> When the models forecast snow, the corrected amounts were about right on average. The misses are mostly storms the models didn't see coming or mistimed, so on big storm days even the corrected forecast tends to run low. Treat the top of the range as a real possibility. Wind-direction adjustments were tested against SNOTEL data and did not help, so none are applied.</p>
-    <p>Live data: Open-Meteo (HRRR, NBM, ECMWF IFS, GFS, ICON, GEM, GEFS, ECMWF ENS) and the NWS Boulder gridpoint forecast, fetched in your browser each time the page loads. Calibration data: NOAA GHCN-Daily station USC00050909 (Breckenridge), Open-Meteo historical forecasts, NRCS SNOTEL, and Breck's season totals as listed by OnTheSnow.</p>
-  </div>
-</section>
-
+  <section class="meth">
+    <details><summary>Methodology and calibration</summary>
+      <p><b>Blend.</b> First 48 hours: HRRR 35%, National Blend 25%, ECMWF 20%, GFS 10%, ICON and GEM 5% each. After 48 hours: ECMWF 35%, National Blend 30%, GFS 15%, ICON and GEM 10% each. Each model is sampled at the grid cell nearest the base, mid-mountain and summit, with temperatures adjusted to the true elevation.</p>
+      <p><b>Calibration to Breckenridge.</b> Each model's past forecasts were compared with the daily snow and water measured by the National Weather Service co-op observer in Breckenridge (station USC00050909, read around 8 AM), November through April. Each model's water is scaled by the factor below before blending. <span id="calMeta"></span> The calibration refreshes monthly.</p>
+      <table><thead><tr><th>Model</th><th class="num">Water factor</th><th>Applies to</th><th class="num">Winters of history</th></tr></thead><tbody id="calTable"></tbody></table>
+      <p><b>Elevation.</b> <span id="elevNote"></span></p>
+      <p><b>Snow ratio.</b> <span id="slrNote"></span> Ratios fall quickly above freezing; some wet snow still accumulates up to about 40°F model temperature. A 15% reduction when summit gusts exceed 35 mph is an assumption and has not been tested.</p>
+      <p><b>Known limits.</b> When the models forecast snow, corrected amounts are about right on average. Most large errors come from storms the models miss or mistime, so on big storm days this forecast still tends to run low. Treat the top of the range as a real possibility.</p>
+    </details>
+  </section>
+</div>
+<footer><div class="wrap">Live data: Open-Meteo (HRRR, NBM, ECMWF IFS, GFS, ICON, GEM, GEFS and ECMWF ensembles) and NWS Boulder gridpoint forecast, retrieved in your browser at load and every 30 minutes. Calibration: NOAA GHCN-Daily USC00050909 (Breckenridge), Open-Meteo historical forecasts, and Breck season totals as listed by OnTheSnow.</div></footer>
 <script>
+
 {
 const PTS=[{n:'Base',ft:9600,lat:39.4808,lon:-106.0670},{n:'Mid',ft:11000,lat:39.4740,lon:-106.0900},{n:'Summit',ft:12800,lat:39.4660,lon:-106.1060}];
 // CALIBRATION: this one line is rewritten by the monthly recalibration (calibrate.js + apply_cal.py)
@@ -163,13 +173,12 @@ async function loadNWS(){
   return out;
 }
 
-function render(data){
+function compute(data){
   const det=Array.isArray(data.det)?data.det:[data.det];
   const time=det[0].hourly.time;const now=nowLocal();let i0=time.indexOf(now);if(i0<0)i0=0;
-  // Blend per point per hour
   const pts=det.map((d,pi)=>{const h=d.hourly;const N=time.length;
     const raw=(v,m)=>h[`${v}_${m}`]||[];const md=Object.fromEntries(MODELS.map(m=>[m.id,m]));
-    const get=(v,m)=>v!=='precipitation'?raw(v,m):(h[`__c_${m}`]||(h[`__c_${m}`]=raw(v,m).map((p,i)=>p==null?null:p*(i-i0<48?md[m].f1:md[m].f2)*ELEVF[pi])));
+    const get=(v,m)=>v!=='precipitation'?raw(v,m):(h[`__c${i0}_${m}`]||(h[`__c${i0}_${m}`]=raw(v,m).map((p,i)=>p==null?null:p*(i-i0<48?md[m].f1:md[m].f2)*ELEVF[pi])));
     const res={P:[],T:[],G:[],FL:[],DIR:[],byModel:{}};
     for(const m of MODELS)res.byModel[m.id]={P:get('precipitation',m.id)};
     for(let i=0;i<N;i++){const lead=i-i0;let sw=0,sP=0,sT=0,swT=0,sG=0,swG=0,fl=null,dir=null;
@@ -184,100 +193,107 @@ function render(data){
     return res});
   const idx=t=>time.indexOf(t);
   const sumRange=(arr,a,b)=>{let s=0,n=0;for(let i=a;i<=b;i++){if(i<0||i>=arr.length)continue;if(arr[i]!=null){s+=arr[i];n++}}return n?s:null};
-  // Report windows: 24h ending 5 AM (hour stamps 06:00 prev day .. 05:00 day)
   const today=now.slice(0,10);
-  const mornings=[];for(let k=1;k<=7;k++){const d=addDays(today,k);const a=idx(addDays(d,-1)+'T06:00'),b=idx(d+'T05:00');if(b>0)mornings.push({d,a:Math.max(a,0),b,lift:[idx(d+'T09:00'),idx(d+'T16:00')]})}
-  // Ensemble per member
+  const mornings=[];for(let k=1;k<=7;k++){const d=addDays(today,k);const a=idx(addDays(d,-1)+'T06:00'),b=idx(d+'T05:00');if(b>0)mornings.push({d,k,a:Math.max(a,0),b,lift:[idx(d+'T09:00'),idx(d+'T16:00')]})}
   let members=[];
   if(data.ens){const h=data.ens.hourly;const et=h.time;
     for(const k of Object.keys(h)){if(!k.startsWith('precipitation'))continue;const suf=k.slice('precipitation'.length);const T=h['temperature_2m'+suf];if(!T)continue;
       const ef=(k.includes('ecmwf')?ENSF.ecmwf:ENSF.gefs)*ELEVF[1];const P=h[k];const S=P.map((p,i)=>snowFrom(p==null?null:p*ef,T[i],null,pts[1].DIR[time.indexOf(et[i])]));members.push({S,et})}}
-  const ensWin=(m)=>members.map(mb=>{const a=mb.et.indexOf(time[m.a]),b=mb.et.indexOf(time[m.b]);if(a<0||b<0)return null;let s=0;for(let i=a;i<=b;i++)s+=mb.S[i]||0;return s}).filter(x=>x!=null);
+  const ensWin=m=>members.map(mb=>{const a=mb.et.indexOf(time[m.a]),b=mb.et.indexOf(time[m.b]);if(a<0||b<0)return null;let s=0;for(let i=a;i<=b;i++)s+=mb.S[i]||0;return s}).filter(x=>x!=null);
+  const mx=a=>{const v=a.filter(x=>x!=null);return v.length?Math.max(...v):null},mn=a=>{const v=a.filter(x=>x!=null);return v.length?Math.min(...v):null};
   for(const m of mornings){
     m.snow=pts.map(p=>sumRange(p.S,m.a,m.b));m.water=sumRange(pts[1].P,m.a,m.b);
     m.models=MODELS.map(md=>sumRange(pts[1].byModel[md.id].S,m.a,m.b));
     m.ens=ensWin(m);const pool=m.ens.concat(m.models.filter(x=>x!=null&&x>=0));
-    m.p10=pct(pool,.1);m.p50=pct(m.ens,.5);m.p90=pct(pool,.9);
+    m.p10=pct(pool,.1);m.p50=pct(m.ens,.5);m.p90=pct(pool,.9);if(m.snow[1]!=null){if(m.p10!=null)m.p10=Math.min(m.p10,m.snow[1]);if(m.p90!=null)m.p90=Math.max(m.p90,m.snow[1])}
     m.prob6=m.ens.length?m.ens.filter(x=>x>=6).length/m.ens.length:null;m.prob1=m.ens.length?m.ens.filter(x=>x>=1).length/m.ens.length:null;
-    const T=pts[1].T.slice(m.a,m.b+1).filter(x=>x!=null);m.slr=null;let ws=0,wp=0;for(let i=m.a;i<=m.b;i++){const p=pts[1].P[i],t=pts[1].T[i];if(p>0&&t!=null&&t<=34){ws+=p*slr(t);wp+=p}}if(wp>0.02)m.slr=ws/wp;
-    const [la,lb]=m.lift;m.hi=Math.max(...pts[0].T.slice(la,lb+1).filter(x=>x!=null));m.lo=Math.min(...pts[2].T.slice(m.a,m.b+1).filter(x=>x!=null));
-    m.gust=Math.max(...pts[2].G.slice(la,lb+1).filter(x=>x!=null));m.liftSnow=sumRange(pts[1].S,la,lb);
-    const dirs=pts[1].DIR.slice(m.a,m.b+1);m.dir=dirSector(dirs[Math.floor(dirs.length/2)]);
+    m.slr=null;let ws=0,wp=0;for(let i=m.a;i<=m.b;i++){const p=pts[1].P[i],t=pts[1].T[i];if(p>0&&t!=null&&t<=36){ws+=p*slr(t);wp+=p}}if(wp>0.02)m.slr=ws/wp;
+    const [la,lb]=m.lift;m.hi=mx(pts[0].T.slice(la,lb+1));m.lo=mn(pts[2].T.slice(m.a,m.b+1));
+    m.gust=mx(pts[2].G.slice(la,lb+1));m.liftSnow=sumRange(pts[1].S,la,lb);
     if(data.nws){let s=0,n=0;for(let i=m.a;i<=m.b;i++){const v=data.nws[time[i]];if(v!=null){s+=v;n++}}m.nws=n>=12?s:null}
   }
-  const call=(s,g)=>{let c=s>=6?'Powder day':s>=3?'Fresh snow':s>=1?'Dusting':'No new snow';return c};
-  // Headline
   const next24=pts.map(p=>sumRange(p.S,i0+1,i0+24));
-  const big=mornings.find(m=>m.snow[1]>=3);
   const todayLift=sumRange(pts[1].S,idx(today+'T09:00'),idx(today+'T16:00'));
-  const snowingNow=(pts[1].S[i0]||0)>0.05||(pts[1].S[i0+1]||0)>0.05;
-  $('headline').textContent=big?`${inch(big.snow[1])} by first chair ${dow(big.d)}`:(Math.max(...mornings.map(m=>m.snow[1]||0))>=1?'Light snow only this week':'Dry week ahead on the mountain');
-  $('lede').textContent=`${big?`Likely range ${inch(big.p10)}–${inch(big.p90)} mid-mountain. `:''}${snowingNow?'Snowing now. ':''}Next 24 hours: ${inch(next24[2])} at the summit, ${inch(next24[1])} mid-mountain, ${inch(next24[0])} at the base. `+(+now.slice(11,13)<16&&todayLift!=null?`Today during lift hours: ${inch(todayLift)} mid-mountain.`:'');
-  $('status').textContent='Updated '+new Date(data.at).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})+(data.ens?'':' · ensembles unavailable')+(data.nws?'':' · NWS unavailable');
-  drawMountain(next24,pts[1].FL[i0]);
-  // Hourly
-  const rows=[];let lastDay='';const H=[];
-  for(let i=i0;i<Math.min(i0+48,time.length);i++){const t=time[i],d=t.slice(0,10);
-    if(d!==lastDay){rows.push(`<tr class="day"><td colspan="7">${dow(d)} ${+d.slice(5,7)}/${+d.slice(8,10)}</td></tr>`);lastDay=d}
-    const s=pts[1].S[i],ss=pts[2].S[i],g=pts[2].G[i],fl=pts[1].FL[i];H.push({t,s,g});
-    rows.push(`<tr><td>${hr(t)}</td><td class="${s>=.1?'sn':''}">${inch(s)}</td><td class="${ss>=.1?'sn':''}">${inch(ss)}</td><td>${pts[0].T[i]==null?'–':Math.round(pts[0].T[i])+'°'}</td><td>${pts[2].T[i]==null?'–':Math.round(pts[2].T[i])+'°'}</td><td class="${g>=45?'hot':''}">${g==null?'–':Math.round(g)}</td><td>${fl==null?'–':(Math.round((fl*3.281-1000)/100)*100).toLocaleString()+'′'}</td></tr>`)}
-  $('hourly').innerHTML=rows.join('');
-  drawHours(H);
-  // Days 1-3
-  $('days13').innerHTML=mornings.slice(0,3).map(m=>{const max=Math.max(12,m.p90||0)*1.1;
-    const w=x=>Math.min(100,100*(x||0)/max);const g=m.gust;
-    return `<div class="card"><h3>${dow(m.d)} ${+m.d.slice(5,7)}/${+m.d.slice(8,10)} · 5 AM report</h3>
-    <div class="row" style="margin-top:8px"><span class="big">${inch(m.snow[1])}</span><span class="pill">${call(m.snow[1])}</span>${g>=45?'<span class="pill red">Wind holds likely</span>':g>=35?'<span class="pill red">Wind holds possible</span>':''}</div>
-    <div class="meter"><i style="left:${w(m.p10)}%;width:${Math.max(1,w(m.p90)-w(m.p10))}%"></i><b style="left:calc(${w(m.snow[1])}% - 1px)"></b></div>
-    <div class="sub">Range ${inch(m.p10)}–${inch(m.p90)} mid-mountain</div>
-    <div class="kv"><span>Summit</span><span>${inch(m.snow[2])}</span><span>Base</span><span>${inch(m.snow[0])}</span><span>Water</span><span>${m.water==null?'–':m.water.toFixed(2)+'″'}</span><span>Snow ratio</span><span>${m.slr?Math.round(m.slr)+':1':'–'}</span><span>Lift-hours snow</span><span>${inch(m.liftSnow)}</span><span>Base high</span><span>${isFinite(m.hi)?Math.round(m.hi)+'°F':'–'}</span><span>Summit low</span><span>${isFinite(m.lo)?Math.round(m.lo)+'°F':'–'}</span><span>Summit gusts</span><span>${isFinite(g)?Math.round(g)+' mph':'–'}</span><span>Flow aloft</span><span>${m.dir||'–'}</span><span>NWS says</span><span>${inch(m.nws)}</span></div></div>`}).join('');
-  // Days 4-7
-  $('days47').innerHTML=mornings.slice(3,7).map(m=>`<div class="card"><h3>${dow(m.d)} ${+m.d.slice(5,7)}/${+m.d.slice(8,10)}</h3>
-    <div class="row" style="margin-top:8px"><span class="big" style="font-size:34px">${m.ens.length?Math.round(100*m.prob1)+'%':'–'}</span><span class="sub">chance of 1″+</span></div>
-    <div class="kv"><span>Chance 6″+</span><span>${m.prob6==null?'–':Math.round(100*m.prob6)+'%'}</span><span>Likely range</span><span>${inch(m.p10)}–${inch(m.p90)}</span><span>Middle run</span><span>${inch(m.p50)}</span><span>Blend</span><span>${inch(m.snow[1])}</span><span>Summit gusts</span><span>${isFinite(m.gust)?Math.round(m.gust)+' mph':'–'}</span></div></div>`).join('');
-  // Model table
-  $('mhead').innerHTML=`<tr><th>Model</th>${mornings.map(m=>`<th>${dow(m.d)} ${+m.d.slice(5,7)}/${+m.d.slice(8,10)}</th>`).join('')}</tr>`;
-  const mrow=(n,vals)=>`<tr><td>${n}</td>${vals.map(v=>`<td>${inch(v)}</td>`).join('')}</tr>`;
-  $('mbody').innerHTML=MODELS.map((md,j)=>mrow(md.n,mornings.map(m=>m.models[j]))).join('')+mrow('NWS Boulder',mornings.map(m=>m.nws))+mrow('Ensemble middle',mornings.map(m=>m.p50))+`<tr><td><b>This forecast</b></td>${mornings.map(m=>`<td class="sn">${inch(m.snow[1])}</td>`).join('')}</tr>`;
-  window.__breck={mornings,next24,i0,now};
+  const gust48=mx(pts[2].G.slice(i0,i0+48));
+  return {time,now,i0,today,pts,mornings,next24,todayLift,gust48,sumRange};
 }
 
-function drawMountain(s24,fl){const svg=$('mtn');const draw=()=>{const W=svg.clientWidth,H=svg.clientHeight;if(!W)return;
-  const y=ft=>H-30-(ft-9000)/(13300-9000)*(H-60);const narrow=W<460;
-  const ridge=[[0,y(9100)],[W*.12,y(9500)],[W*.25,y(9700)],[W*.42,y(10600)],[W*.55,y(11200)],[W*.66,y(11900)],[W*.74,y(12500)],[W*.8,y(12900)],[W*.86,y(12650)],[W*.93,y(12200)],[W,y(11800)]];
-  const path='M'+ridge.map(p=>p.map(v=>v.toFixed(1)).join(',')).join('L')+`L${W},${H}L0,${H}Z`;
-  const cap='M'+ridge.slice(5).map(p=>p.map(v=>v.toFixed(1)).join(',')).join('L')+'L'+ridge.slice(5).reverse().map(([x,yy])=>`${x.toFixed(1)},${(yy+18).toFixed(1)}`).join('L')+'Z';
-  const mk=[[W*.22,9600,0],[W*.55,11000,1],[W*.78,12800,2]];
-  let snowLine='';if(fl!=null){const sl=fl*3.281-1000;if(sl>9300&&sl<13000){const yy=y(sl);snowLine=`<line x1="0" x2="${W}" y1="${yy}" y2="${yy}" stroke="var(--red)" stroke-dasharray="6 5" stroke-width="1.5"/><text x="8" y="${yy-6}" font-size="13" fill="var(--red)">Snow line ~${(Math.round(sl/100)*100).toLocaleString()}′</text>`}}
-  svg.innerHTML=`<defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--rock2)"/><stop offset="1" stop-color="var(--rock)"/></linearGradient></defs>
-  <path d="${path}" fill="url(#g1)"/>${snowLine}
-  ${mk.map(([x,ft,k])=>{const yy=ridge.reduce((a,p,i)=>i&&x<=p[0]&&x>=ridge[i-1][0]?ridge[i-1][1]+(p[1]-ridge[i-1][1])*(x-ridge[i-1][0])/(p[0]-ridge[i-1][0]):a,y(ft));
-    const ly=Math.max(narrow?46:54,yy-(narrow?48:60));const anchor=x>W*.7?'end':'middle';
-    return `<line x1="${x}" x2="${x}" y1="${yy}" y2="${ly+10}" stroke="var(--ink)" stroke-width="1"/><circle cx="${x}" cy="${yy}" r="4" fill="var(--ink)"/>
-    <text x="${x}" y="${ly}" text-anchor="${anchor}" font-family="Barlow Condensed" font-weight="700" font-size="${narrow?24:30}" fill="var(--snow)">${inch(s24[k])}</text>
-    <text x="${x}" y="${ly+(narrow?-26:-32)}" text-anchor="${anchor}" font-size="13" fill="var(--mute)">${['Base','Mid','Summit'][k]} ${ft.toLocaleString()}′</text>`}).join('')}
-  <text x="${W-6}" y="${H-8}" text-anchor="end" font-size="13" fill="#fff">next 24 hours</text>`};
-  svg._draw=draw;draw();if(!svg._ro){svg._ro=new ResizeObserver(()=>svg._draw());svg._ro.observe(svg)}}
+const dlabel=d=>`${dow(d)} ${+d.slice(5,7)}/${+d.slice(8,10)}`;
+const deg=x=>x==null||!isFinite(x)?'–':Math.round(x)+'°';
+const pctf=x=>x==null?'–':Math.round(100*x)+'%';
+const mph=x=>x==null||!isFinite(x)?'–':Math.round(x);
 
-function drawHours(H){const svg=$('hourChart');const draw=()=>{const W=svg.clientWidth,Ht=svg.clientHeight;if(!W)return;
-  const L=34,R=8,T=14,B=44;const n=H.length;const bw=(W-L-R)/n;const mx=Math.max(1,...H.map(h=>h.s||0));const top=Math.ceil(mx*2)/2;
-  const yy=v=>T+(Ht-T-B)*(1-v/top);let g='';
-  for(let k=0;k<=2;k++){const v=top*k/2;g+=`<line x1="${L}" x2="${W-R}" y1="${yy(v)}" y2="${yy(v)}" stroke="var(--line)"/><text x="${L-6}" y="${yy(v)+4}" text-anchor="end" font-size="13" fill="var(--mute)">${v.toFixed(v<2?1:0)}″</text>`}
-  H.forEach((h,i)=>{const x=L+i*bw;const v=h.s||0;if(v>0.02)g+=`<rect x="${x+1}" y="${yy(v)}" width="${Math.max(1,bw-2)}" height="${yy(0)-yy(v)}" fill="var(--snow)" rx="1"><title>${hr(h.t)}: ${inch(v)}</title></rect>`;
-    if(h.g!=null)g+=`<rect x="${x}" y="${Ht-B+6}" width="${bw}" height="8" fill="${h.g>=45?'var(--red)':h.g>=35?'var(--red)':'var(--line)'}" opacity="${h.g>=45?1:h.g>=35?.45:1}"/>`;
-    const lab=W<520?12:6;if(i%lab===0)g+=`<text x="${x}" y="${Ht-8}" font-size="13" fill="var(--mute)">${+h.t.slice(11,13)===0?dow(h.t.slice(0,10)):hr(h.t)}</text>`});
+function render(data){
+  const C=compute(data);const {mornings,pts,i0,time,now,next24}=C;window.__breck=C;
+  // Summary line
+  const best=mornings.reduce((a,m)=>(m.snow[1]||0)>(a?a.snow[1]||0:-1)?m:a,null);
+  const wk=mornings.reduce((s,m)=>s+(m.snow[1]||0),0);
+  const snowingNow=(pts[1].S[i0]||0)>0.05||(pts[1].S[i0+1]||0)>0.05;
+  let sum;
+  if(!best||(best.snow[1]||0)<1)sum='No significant snow expected in the next seven days.';
+  else sum=`Largest expected snowfall: ${dlabel(best.d)} report, ${inch(best.snow[1])} mid-mountain (range ${inch(best.p10)}–${inch(best.p90)}). Seven-day total about ${inch(wk)}.`;
+  $('summary').textContent=(snowingNow?'Snow is falling now. ':'')+sum;
+  $('status').textContent='Model data as of '+new Date(data.at).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'})+(data.ens?'':' · ensembles unavailable')+(data.nws?'':' · NWS unavailable');
+  // Key figures
+  const m3=mornings.slice(0,3).reduce((s,m)=>s+(m.snow[1]||0),0);
+  const k=[
+    ['Next 24 hours',inch(next24[1]),`Base ${inch(next24[0])} · Summit ${inch(next24[2])}`],
+    ['Next 3 report mornings',inch(m3),mornings.slice(0,3).map(m=>`${dow(m.d)} ${inch(m.snow[1])}`).join(' · ')],
+    ['Best chance of 6″+',best&&best.prob6!=null?pctf(Math.max(...mornings.map(m=>m.prob6||0))):'–',(()=>{const b=mornings.reduce((a,m)=>(m.prob6||0)>(a?a.prob6||0:-1)?m:a,null);return b&&b.prob6?`${dlabel(b.d)} report`:'No day above 0%'})()],
+    ['Max summit gust, 48 hrs',C.gust48==null?'–':mph(C.gust48)+' mph',C.gust48>=45?'Upper-lift wind holds likely':C.gust48>=35?'Upper-lift wind holds possible':'No wind-hold concern']
+  ];
+  $('kpis').innerHTML=k.map(([l,v,s],j)=>`<div class="kpi${j===3&&C.gust48>=35?' warn':''}"><div class="kl">${l}</div><div class="kv">${v}</div><div class="ks">${s}</div></div>`).join('');
+  // 7-day table
+  const scale=Math.max(6,...mornings.map(m=>m.p90||0),...mornings.map(m=>m.snow[1]||0));
+  const bar=m=>{const w=x=>Math.min(100,100*(x||0)/scale);return `<div class="rb" title="10–90% range ${inch(m.p10)}–${inch(m.p90)}"><i style="left:${w(m.p10)}%;width:${Math.max(.8,w(m.p90)-w(m.p10))}%"></i><b style="left:${w(m.snow[1])}%"></b></div>`};
+  $('week').innerHTML=mornings.map((m,j)=>{const lo=j>=3;const wind=m.gust>=45?'<span class="flag">Hold likely</span>':m.gust>=35?'<span class="flag soft">Hold possible</span>':'';
+    return `${j===3?'<tr class="sep"><td colspan="11">Days 4–7 · lower confidence: use the odds and range rather than the single number</td></tr>':''}<tr class="${lo?'lo':''}">
+    <td class="day">${dlabel(m.d)}</td><td class="num main">${inch(m.snow[1])}</td><td class="barc">${bar(m)}</td><td class="num">${inch(m.p10)}–${inch(m.p90)}</td>
+    <td class="num">${pctf(m.prob1)}</td><td class="num">${pctf(m.prob6)}</td><td class="num">${inch(m.snow[0])} / ${inch(m.snow[2])}</td>
+    <td class="num">${m.slr?Math.round(m.slr)+':1':'–'}</td><td class="num">${deg(m.hi)} / ${deg(m.lo)}</td><td class="num">${mph(m.gust)} ${wind}</td><td class="num">${inch(m.nws)}</td></tr>`}).join('');
+  // Hourly
+  const H=[];const rows=[];let last='';
+  for(let i=i0;i<Math.min(i0+48,time.length);i++){const t=time[i],d=t.slice(0,10);H.push({t,s:pts[1].S[i],tb:pts[0].T[i],ts:pts[2].T[i],g:pts[2].G[i]});
+    if(d!==last){rows.push(`<tr class="sep"><td colspan="7">${dlabel(d)}</td></tr>`);last=d}
+    const fl=pts[1].FL[i];
+    rows.push(`<tr><td class="day">${hr(t)}</td><td class="num">${inch(pts[1].S[i])}</td><td class="num">${inch(pts[2].S[i])}</td><td class="num">${deg(pts[0].T[i])}</td><td class="num">${deg(pts[2].T[i])}</td><td class="num${pts[2].G[i]>=45?' hot':''}">${mph(pts[2].G[i])}</td><td class="num">${fl==null?'–':(Math.round((fl*3.281-1000)/100)*100).toLocaleString()+'′'}</td></tr>`)}
+  $('hourly').innerHTML=rows.join('');
+  drawHours(H);
+  // Models
+  $('mhead').innerHTML=`<tr><th>Model</th>${mornings.map(m=>`<th class="num">${dlabel(m.d)}</th>`).join('')}</tr>`;
+  const mrow=(n,vals,cls='')=>`<tr class="${cls}"><td class="day">${n}</td>${vals.map(v=>`<td class="num">${inch(v)}</td>`).join('')}</tr>`;
+  $('mbody').innerHTML=MODELS.map((md,j)=>mrow(md.n,mornings.map(m=>m.models[j]))).join('')+mrow('NWS Boulder',mornings.map(m=>m.nws))+mrow('Ensemble median',mornings.map(m=>m.p50))+mrow('This forecast',mornings.map(m=>m.snow[1]),'tot');
+}
+
+function drawHours(H){const svg=$('hourChart');const draw=()=>{const W=svg.clientWidth,Ht=svg.clientHeight;if(!W||!H.length)return;
+  const L=40,R=40,T=12,B=50,gH=8;const n=H.length,bw=(W-L-R)/n;const plotB=Ht-B;
+  const smax=Math.max(.5,...H.map(h=>h.s||0));const top=smax<=.5?.5:smax<=1?1:Math.ceil(smax);
+  const temps=H.flatMap(h=>[h.tb,h.ts]).filter(x=>x!=null);let tmin=Math.floor(Math.min(...temps)/10)*10;let tmax=tmin+Math.max(20,Math.ceil((Math.max(...temps)-tmin)/20)*20);
+  const ys=v=>T+(plotB-T)*(1-v/top),yt=v=>T+(plotB-T)*(1-(v-tmin)/(tmax-tmin));let g='';
+  for(let k=0;k<=4;k++){const y=T+(plotB-T)*k/4;g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" class="grid"/>`;
+    g+=`<text x="${L-6}" y="${y+4}" text-anchor="end" class="ax">${(top*(1-k/4)).toFixed(top<2?2:1).replace(/0+$/,'').replace(/\.$/,'')}″</text>`;
+    g+=`<text x="${W-R+6}" y="${y+4}" class="ax">${Math.round(tmax-(tmax-tmin)*k/4)}°</text>`}
+  H.forEach((h,i)=>{const x=L+i*bw;if(+h.t.slice(11,13)===0)g+=`<line x1="${x}" x2="${x}" y1="${T}" y2="${plotB+gH+6}" class="mid"/>`;
+    if((h.s||0)>.01)g+=`<rect x="${x+.5}" y="${ys(h.s)}" width="${Math.max(1,bw-1)}" height="${plotB-ys(h.s)}" class="sb"><title>${hr(h.t)} ${inch(h.s)}</title></rect>`;
+    if(h.g!=null)g+=`<rect x="${x}" y="${plotB+4}" width="${bw+.2}" height="${gH}" class="${h.g>=45?'g3':h.g>=35?'g2':'g1'}"><title>Summit gust ${mph(h.g)} mph</title></rect>`;
+    const step=W<560?12:6;if(i%step===0){const hh=+h.t.slice(11,13);g+=`<text x="${x}" y="${Ht-18}" class="ax">${hr(h.t)}</text>`;if(hh===0||i===0)g+=`<text x="${x}" y="${Ht-3}" class="ax b">${dlabel(h.t.slice(0,10))}</text>`}});
+  const line=(k,cls)=>{let d='';H.forEach((h,i)=>{if(h[k]==null)return;d+=(d?'L':'M')+(L+i*bw+bw/2).toFixed(1)+','+yt(h[k]).toFixed(1)});return `<path d="${d}" class="${cls}"/>`};
+  g+=line('tb','tl1')+line('ts','tl2');
   svg.innerHTML=g};svg._draw=draw;draw();if(!svg._ro){svg._ro=new ResizeObserver(()=>svg._draw());svg._ro.observe(svg)}}
 
-
-function calNotes(){const M=CAL.models,f=x=>'×'+(+x).toFixed(2).replace(/0$/,'').replace(/\.$/,'');
-  $('calNotes').innerHTML=`<p><b>Calibrated to Breckenridge itself (last updated ${CAL.updated}).</b> Each model's past forecasts were compared with the daily snow and water measured by the National Weather Service co-op observer in Breckenridge (9,600′, read around 8 AM), November through April, ${CAL.winters}. The archive covers ${M.ecmwf_ifs.winters} winters for ECMWF, ${M.gfs_hrrr.winters} for HRRR, ${M.gfs_seamless.winters} for GFS, ${M.icon_seamless.winters} for ICON and GEM, and ${M.ncep_nbm_conus.winters} for the National Blend, so the newer models' factors rest on less history. Each model's water is rescaled before blending: HRRR and short-range GFS ${f(M.gfs_hrrr.f1)}, ECMWF ${f(M.ecmwf_ifs.f1)}, ICON ${f(M.icon_seamless.f1)}, GEM ${f(M.gem_seamless.f1)}, longer-range GFS ${f(M.gfs_seamless.f2)}, National Blend ${f(M.ncep_nbm_conus.f1)}, and the ECMWF and GFS ensembles ${f(CAL.ens.ecmwf)} and ${f(CAL.ens.gefs)}. Holding out each winter in turn, the correction brought storm totals closer to what fell in ${CAL.cv.improved} of ${CAL.cv.of} winters. It recalibrates monthly as new observations come in.</p>
-  <p><b>Elevation.</b> Breck's reported season totals average ${CAL.resortRatio}× the snow measured in town, but the models only make mid-mountain about ${CAL.modelRatio}× wetter than the base. Mid-mountain and summit water is raised ${f(CAL.elev)} to close that gap.</p>
-  <p><b>Snow ratio.</b> Fit to ${CAL.slrDays} measured snow days in Breckenridge: ${CAL.slr.map(([t,r])=>`${Math.round(r)}:1 at ${t}°F`).join(', ')}. Measured Breck snow does not show the fluffy 17–20:1 that some forecasts assume. A 15% trim when summit gusts pass 35 mph is kept as an assumption; it isn't tested.</p>`}
+function calNotes(){const M=CAL.models,f=x=>'×'+(+x).toFixed(2);
+  $('calTable').innerHTML=[['HRRR',M.gfs_hrrr.f1,'First 48 hours',M.gfs_hrrr.winters],['National Blend',M.ncep_nbm_conus.f1,'All days',M.ncep_nbm_conus.winters],['ECMWF',M.ecmwf_ifs.f1,'All days',M.ecmwf_ifs.winters],['GFS',M.gfs_seamless.f1,'First 48 hours',M.gfs_hrrr.winters],['GFS',M.gfs_seamless.f2,'After 48 hours',M.gfs_seamless.winters],['ICON',M.icon_seamless.f1,'All days',M.icon_seamless.winters],['GEM',M.gem_seamless.f1,'All days',M.gem_seamless.winters],['ECMWF ensemble',CAL.ens.ecmwf,'Days 1–7',M.ecmwf_ifs.winters],['GFS ensemble',CAL.ens.gefs,'Days 1–7',M.gfs_seamless.winters]]
+    .map(([n,v,w,y])=>`<tr><td class="day">${n}</td><td class="num">${f(v)}</td><td>${w}</td><td class="num">${y}</td></tr>`).join('');
+  $('calMeta').textContent=`Last recalibrated ${CAL.updated} on ${CAL.winters}. Held-out test: storm totals closer to observed in ${CAL.cv.improved} of ${CAL.cv.of} winters.`;
+  $('elevNote').textContent=`Breck's reported season totals average ${CAL.resortRatio}× the snow measured in town; the models put mid-mountain only ${CAL.modelRatio}× wetter than the base. Mid-mountain and summit water is raised ${f(CAL.elev)}.`;
+  $('slrNote').textContent=`Fit to ${CAL.slrDays} measured snow days: `+CAL.slr.slice(1).map(([t,r])=>`${Math.round(r)}:1 at ${Math.round(t)}°F`).join(', ')+'.';
+}
 calNotes();
-$('refresh').addEventListener('click',load);
+$('refresh').addEventListener('click',e=>{e.preventDefault();load()});
 try{const c=JSON.parse(localStorage.getItem('breckfx')||'null');if(c)render(c)}catch(e){}
 load();setInterval(load,30*60e3);
 }
+
 </script>
 </body>
 </html>
