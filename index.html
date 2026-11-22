@@ -53,7 +53,8 @@ td.hot{color:var(--red);font-weight:600}
 .rb{position:relative;height:8px;background:var(--rule);border-radius:4px}
 .rb i{position:absolute;top:0;bottom:0;background:var(--blue2);border-radius:4px}
 .rb b{position:absolute;top:-4px;width:3px;height:16px;margin-left:-1.5px;background:var(--blue);border-radius:1px}
-.flag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:600;background:var(--red);color:#fff}
+.flag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:600;background:var(--red);color:#fff;white-space:nowrap}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .flag:not(.soft){color:#1d0c0a}}:root[data-theme=dark] .flag:not(.soft){color:#1d0c0a}
 .flag.soft{background:var(--red2);color:var(--red)}
 .scroll{overflow-x:auto}
 .fig{position:relative;height:300px}.fig>svg{position:absolute;inset:0;width:100%;height:100%}
@@ -66,6 +67,30 @@ h3.sub{font-size:15px;margin:22px 0 2px;font-weight:700}
 .zone2{fill:var(--red2);opacity:.55}.zone3{fill:var(--red2)}.zt{font-size:11px;fill:var(--red);font-weight:600;paint-order:stroke;stroke:var(--bg);stroke-width:3px}
 .gl{fill:none;stroke:var(--ink);stroke-width:1.8}.gd{fill:var(--red)}
 .fan{fill:var(--blue2)}.p50{fill:none;stroke:var(--mute);stroke-width:1.4;stroke-dasharray:5 4}.cl{fill:none;stroke:var(--blue);stroke-width:2.4}.cv{font-size:12px;font-weight:700;fill:var(--blue)}
+.d3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.d4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.dc{border:1px solid var(--rule);border-radius:10px;padding:16px;background:var(--bg)}
+.dc.lo4{background:var(--panel)}
+.dh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.dd{font-weight:700;font-size:15px}.dt{font-size:12px;color:var(--mute)}
+.dv{font-size:40px;font-weight:700;color:var(--blue);line-height:1.1;margin:8px 0 2px}
+.dv small{font-size:14px;color:var(--mute);font-weight:500;margin-left:6px}
+.rl{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);margin-top:4px}
+.el3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:end;height:92px;margin:14px 0 6px;border-bottom:1px solid var(--rule2)}
+.el3 div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%}
+.el3 i{display:block;width:70%;background:var(--blue2);border-radius:3px 3px 0 0;min-height:2px}
+.el3 div:nth-child(2) i{background:var(--blue)}
+.el3 b{font-size:13px;margin-bottom:3px}
+.el3l{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center;font-size:11px;color:var(--mute)}
+.dm{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:13px;margin-top:12px;padding-top:10px;border-top:1px solid var(--rule)}
+.dm>span:nth-child(odd){color:var(--mute)}
+.pr{margin-top:10px}.pr .pl{display:flex;justify-content:space-between;font-size:12px;color:var(--mute)}
+.pr .pl b{color:var(--ink);font-size:14px}
+.pb{height:10px;background:var(--rule);border-radius:5px;overflow:hidden;margin-top:3px}.pb i{display:block;height:100%;background:var(--blue);border-radius:5px}
+.pb.six i{background:var(--ink)}
+.big4{font-size:30px;font-weight:700;color:var(--blue);line-height:1.1;margin-top:6px}
+@media(max-width:900px){.d4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.d3{grid-template-columns:minmax(0,1fr)}}
 .legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--mute);margin:8px 0 0}
 .legend i{display:inline-block;width:14px;height:10px;margin-right:6px;vertical-align:-1px;border-radius:2px}
 .legend .ln{height:2px;vertical-align:3px}
@@ -96,9 +121,18 @@ footer{border-top:1px solid var(--rule);margin-top:34px;padding:18px 0 40px;colo
   <div class="kpis" id="kpis"></div>
 
   <section>
-    <h2>Seven-day outlook</h2>
-    <p class="note">Each row is the 24 hours ending at the 5 AM snow report, the same window Breck reports. Snow is at mid-mountain unless noted; “top” is the summit, gusts in mph, and 1″+ / 6″+ are ensemble odds. The bar shows the 10–90% range from 82 ensemble runs plus the individual models; the tick is this forecast.</p>
+    <h2>Next 3 report mornings</h2>
+    <p class="note">Each card is the 24 hours ending at the 5 AM snow report, the window Breck reports. The large figure is mid-mountain; the bar shows the 10–90% range, with the tick marking this forecast.</p>
+    <div class="d3" id="days3"></div>
+  </section>
+
+  <section>
+    <h2>Days 4–7</h2>
+    <p class="note">At this range a single number isn't reliable. Each card shows the likely range at mid-mountain and the odds of 1″+ and 6″+ from 82 ensemble runs.</p>
+    <div class="d4" id="days47"></div>
+    <details><summary>Full 7-day table</summary>
     <div class="scroll"><table class="wk"><thead><tr><th>Report</th><th class="num">Mid-mtn</th><th>Range</th><th class="num">10–90%</th><th class="num">1″+</th><th class="num">6″+</th><th class="num">Base / Top</th><th class="num">Ratio</th><th class="num">Base hi / Top lo</th><th class="num">Top gust</th><th class="num">NWS</th></tr></thead><tbody id="week"></tbody></table></div>
+    </details>
   </section>
 
   <section>
@@ -278,6 +312,23 @@ function render(data){
     <td class="day">${dlabel(m.d)}</td><td class="num main">${inch(m.snow[1])}</td><td class="barc">${bar(m)}</td><td class="num">${inch(m.p10)}–${inch(m.p90)}</td>
     <td class="num">${pctf(m.prob1)}</td><td class="num">${pctf(m.prob6)}</td><td class="num">${inch(m.snow[0])} / ${inch(m.snow[2])}</td>
     <td class="num">${m.slr?Math.round(m.slr)+':1':'–'}</td><td class="num">${deg(m.hi)} / ${deg(m.lo)}</td><td class="num">${mph(m.gust)} ${wind}</td><td class="num">${inch(m.nws)}</td></tr>`}).join('');
+  // Day cards
+  const flag=g=>g>=45?'<span class="flag">Hold likely</span>':g>=35?'<span class="flag soft">Hold possible</span>':'';
+  const ttl=m=>m.k===1?'Tomorrow':dow(m.d)==='Sun'||dow(m.d)==='Sat'?'Weekend':'';
+  const d3m=mornings.slice(0,3);const emax=Math.max(1,...d3m.flatMap(m=>m.snow.map(x=>x||0)));
+  $('days3').innerHTML=d3m.map(m=>{const w=x=>Math.min(100,100*(x||0)/scale);const h=x=>Math.max(2,100*(x||0)/emax);
+    return `<div class="dc"><div class="dh"><span class="dd">${dlabel(m.d)} · 5 AM</span><span class="dt">${pctf(m.prob1)} chance of 1″+</span></div>
+    <div class="dv">${inch(m.snow[1])}<small>mid-mountain</small></div>
+    <div class="rb" style="margin-top:8px"><i style="left:${w(m.p10)}%;width:${Math.max(.8,w(m.p90)-w(m.p10))}%"></i><b style="left:${w(m.snow[1])}%"></b></div>
+    <div class="rl"><span>Range ${inch(m.p10)}–${inch(m.p90)}</span><span>6″+ ${pctf(m.prob6)}</span></div>
+    <div class="el3">${m.snow.map(x=>`<div><b>${inch(x)}</b><i style="height:${h(x)}%"></i></div>`).join('')}</div>
+    <div class="el3l"><span>Base</span><span>Mid</span><span>Summit</span></div>
+    <div class="dm"><span>Base high / summit low</span><span>${deg(m.hi)} / ${deg(m.lo)}</span><span>Summit gust</span><span>${m.gust==null||!isFinite(m.gust)?'–':mph(m.gust)+' mph'} ${flag(m.gust)}</span><span>Snow ratio</span><span>${m.slr?Math.round(m.slr)+':1':'–'}</span><span>NWS forecast</span><span>${inch(m.nws)}</span></div></div>`}).join('');
+  $('days47').innerHTML=mornings.slice(3,7).map(m=>`<div class="dc lo4"><div class="dh"><span class="dd">${dlabel(m.d)}</span><span class="dt">5 AM report</span></div>
+    <div class="big4">${inch(m.p10)}–${inch(m.p90)}</div><div class="dt">likely range, mid-mountain</div>
+    <div class="pr"><div class="pl"><span>1″+</span><b>${pctf(m.prob1)}</b></div><div class="pb"><i style="width:${100*(m.prob1||0)}%"></i></div></div>
+    <div class="pr"><div class="pl"><span>6″+</span><b>${pctf(m.prob6)}</b></div><div class="pb six"><i style="width:${100*(m.prob6||0)}%"></i></div></div>
+    <div class="dm"><span>Forecast</span><span>${inch(m.snow[1])}</span><span>Summit gust</span><span>${m.gust==null||!isFinite(m.gust)?'–':mph(m.gust)+' mph'} ${flag(m.gust)}</span></div></div>`).join('');
   // Hourly
   const H=[];const rows=[];let last='';
   for(let i=i0;i<Math.min(i0+48,time.length);i++){const t=time[i],d=t.slice(0,10);H.push({t,s:pts[1].S[i],tb:pts[0].T[i],ts:pts[2].T[i],g:pts[2].G[i]});
