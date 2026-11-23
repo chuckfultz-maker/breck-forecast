@@ -30,6 +30,12 @@ if len(new["slr"]) < 5 or not all(2 <= r <= 20 for _, r in new["slr"]):
     problems.append("snow-ratio table looks wrong")
 if new["cv"]["of"] and new["cv"]["improved"] / new["cv"]["of"] < 0.5:
     problems.append(f"correction only helped {new['cv']['improved']}/{new['cv']['of']} held-out winters")
+for key in ("w1", "w2"):
+    w = new.get(key)
+    if w is None:
+        continue
+    if any(v < 0 for v in w.values()) or not (0.95 <= sum(w.values()) <= 1.05):
+        problems.append(f"{key} blend weights look wrong: {w}")
 if problems:
     print("NOT APPLIED:\n  " + "\n  ".join(problems))
     sys.exit(2)
@@ -43,6 +49,9 @@ for mid, v in new["models"].items():
     o = old["models"][mid]
     if (v["f1"], v["f2"]) != (o["f1"], o["f2"]):
         print(f"  {mid}: {o['f1']}/{o['f2']} -> {v['f1']}/{v['f2']}")
+for k in ("w1", "w2"):
+    if new.get(k) != old.get(k):
+        print(f"  blend weights {k}: {old.get(k)} -> {new.get(k)}")
 for k in ("elev", "resortRatio", "modelRatio", "slrDays"):
     if new[k] != old[k]:
         print(f"  {k}: {old[k]} -> {new[k]}")

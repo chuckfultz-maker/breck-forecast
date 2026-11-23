@@ -165,7 +165,7 @@ footer{border-top:1px solid var(--rule);margin-top:34px;padding:18px 0 40px;colo
 
   <section class="meth">
     <details><summary>Methodology and calibration</summary>
-      <p><b>Blend.</b> First 48 hours: HRRR 35%, National Blend 25%, ECMWF 20%, GFS 10%, ICON and GEM 5% each. After 48 hours: ECMWF 35%, National Blend 30%, GFS 15%, ICON and GEM 10% each. Each model is sampled at the grid cell nearest the base, mid-mountain and summit, with temperatures adjusted to the true elevation.</p>
+      <p><b>Blend.</b> <span id="blendNote"></span> Each model is sampled at the grid cell nearest the base, mid-mountain and summit, with temperatures adjusted to the true elevation.</p>
       <p><b>Calibration to Breckenridge.</b> Each model's past forecasts were compared with the daily snow and water measured by the National Weather Service co-op observer in Breckenridge (station USC00050909, read around 8 AM), November through April. Each model's water is scaled by the factor below before blending. <span id="calMeta"></span> The calibration refreshes monthly.</p>
       <table><thead><tr><th>Model</th><th class="num">Water factor</th><th>Applies to</th><th class="num">Winters of history</th></tr></thead><tbody id="calTable"></tbody></table>
       <p><b>Elevation.</b> <span id="elevNote"></span></p>
@@ -180,8 +180,8 @@ footer{border-top:1px solid var(--rule);margin-top:34px;padding:18px 0 40px;colo
 {
 const PTS=[{n:'Base',ft:9600,lat:39.4808,lon:-106.0670},{n:'Mid',ft:11000,lat:39.4740,lon:-106.0900},{n:'Summit',ft:12800,lat:39.4660,lon:-106.1060}];
 // CALIBRATION: this one line is rewritten by the monthly recalibration (calibrate.js + apply_cal.py)
-const CAL={"updated":"2026-11-21","winters":"2016–17 to 2025–26","models":{"gfs_hrrr":{"f1":1.43,"f2":1.43,"winters":9},"ncep_nbm_conus":{"f1":1,"f2":1,"winters":2},"ecmwf_ifs":{"f1":0.94,"f2":0.94,"winters":10},"gfs_seamless":{"f1":1.43,"f2":0.96,"winters":6},"icon_seamless":{"f1":1.06,"f2":1.06,"winters":4},"gem_seamless":{"f1":0.96,"f2":0.96,"winters":4}},"ens":{"ecmwf":0.94,"gefs":0.96},"elev":1.13,"resortRatio":1.58,"modelRatio":1.39,"slr":[[-10,12.3],[3,12.3],[12.5,12.2],[17.5,13.8],[22,13.7],[26,13.1],[29.5,11.5],[32.5,9.7],[36,6]],"slrDays":375,"cv":{"improved":9,"of":10}};
-const MODELS=[{id:'gfs_hrrr',n:'HRRR',w1:.35,w2:0},{id:'ncep_nbm_conus',n:'Natl Blend',w1:.25,w2:.30},{id:'ecmwf_ifs',n:'ECMWF',w1:.20,w2:.35},{id:'gfs_seamless',n:'GFS',w1:.10,w2:.15},{id:'icon_seamless',n:'ICON',w1:.05,w2:.10},{id:'gem_seamless',n:'GEM',w1:.05,w2:.10}].map(m=>({...m,...CAL.models[m.id]}));
+const CAL={"updated":"2026-11-21","winters":"2016–17 to 2025–26","models":{"gfs_hrrr":{"f1":1.43,"f2":1.43,"winters":9},"ncep_nbm_conus":{"f1":1,"f2":1,"winters":2},"ecmwf_ifs":{"f1":0.94,"f2":0.94,"winters":10},"gfs_seamless":{"f1":1.43,"f2":0.96,"winters":6},"icon_seamless":{"f1":1.06,"f2":1.06,"winters":4},"gem_seamless":{"f1":0.96,"f2":0.96,"winters":4}},"ens":{"ecmwf":0.94,"gefs":0.96},"elev":1.13,"resortRatio":1.58,"modelRatio":1.39,"slr":[[-10,12.3],[3,12.3],[12.5,12.2],[17.5,13.8],[22,13.7],[26,13.1],[29.5,11.5],[32.5,9.7],[36,6]],"slrDays":375,"cv":{"improved":9,"of":10},"w1":{"gfs_hrrr":0.25,"ncep_nbm_conus":0.25,"ecmwf_ifs":0.38,"gfs_seamless":0.12,"icon_seamless":0,"gem_seamless":0},"w2":{"gfs_hrrr":0,"ncep_nbm_conus":0.29,"ecmwf_ifs":0.45,"gfs_seamless":0.14,"icon_seamless":0.06,"gem_seamless":0.06},"wcv":{"maeOld":0.0948,"maeNew":0.0896}};
+const MODELS=[{id:'gfs_hrrr',n:'HRRR',w1:.35,w2:0},{id:'ncep_nbm_conus',n:'Natl Blend',w1:.25,w2:.30},{id:'ecmwf_ifs',n:'ECMWF',w1:.20,w2:.35},{id:'gfs_seamless',n:'GFS',w1:.10,w2:.15},{id:'icon_seamless',n:'ICON',w1:.05,w2:.10},{id:'gem_seamless',n:'GEM',w1:.05,w2:.10}].map(m=>({...m,...CAL.models[m.id],...(CAL.w1?{w1:CAL.w1[m.id]??m.w1,w2:CAL.w2[m.id]??m.w2}:{})}));
 const ENSF=CAL.ens;
 const ELEVF=[1,CAL.elev,CAL.elev];
 // History correction multipliers (phase 2 fills these in). Keyed by 700 hPa wind sector.
@@ -417,6 +417,10 @@ function drawCum(C){const svg=$('cumChart');const {time,i0,pts,members}=C;const 
     svg.innerHTML=g};svg._draw=draw;draw();if(!svg._ro){svg._ro=new ResizeObserver(()=>svg._draw());svg._ro.observe(svg)}}
 
 function calNotes(){const M=CAL.models,f=x=>'×'+(+x).toFixed(2);
+  const nm={gfs_hrrr:'HRRR',ncep_nbm_conus:'National Blend',ecmwf_ifs:'ECMWF',gfs_seamless:'GFS',icon_seamless:'ICON',gem_seamless:'GEM'};
+  const wl=w=>Object.entries(w).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${nm[k]} ${Math.round(100*v)}%`).join(', ');
+  const zero=w=>Object.entries(w).filter(([,v])=>!v).map(([k])=>nm[k]).filter(n=>n!=='HRRR');
+  $('blendNote').textContent=CAL.w1?`Weights are fitted to Breckenridge history: the mix of models that best matched measured snow in held-out winters${CAL.wcv?` (average daily error ${CAL.wcv.maeNew.toFixed(3)}″ of water vs ${CAL.wcv.maeOld.toFixed(3)}″ for the earlier hand-set weights)`:''}. First 48 hours: ${wl(CAL.w1)}${zero(CAL.w1).length?`; ${zero(CAL.w1).join(' and ')} did not add skill at short range and are shown for comparison only`:''}. After 48 hours, when HRRR runs out: ${wl(CAL.w2)}.`:'';
   $('calTable').innerHTML=[['HRRR',M.gfs_hrrr.f1,'First 48 hours',M.gfs_hrrr.winters],['National Blend',M.ncep_nbm_conus.f1,'All days',M.ncep_nbm_conus.winters],['ECMWF',M.ecmwf_ifs.f1,'All days',M.ecmwf_ifs.winters],['GFS',M.gfs_seamless.f1,'First 48 hours',M.gfs_hrrr.winters],['GFS',M.gfs_seamless.f2,'After 48 hours',M.gfs_seamless.winters],['ICON',M.icon_seamless.f1,'All days',M.icon_seamless.winters],['GEM',M.gem_seamless.f1,'All days',M.gem_seamless.winters],['ECMWF ensemble',CAL.ens.ecmwf,'Days 1–7',M.ecmwf_ifs.winters],['GFS ensemble',CAL.ens.gefs,'Days 1–7',M.gfs_seamless.winters]]
     .map(([n,v,w,y])=>`<tr><td class="day">${n}</td><td class="num">${f(v)}</td><td>${w}</td><td class="num">${y}</td></tr>`).join('');
   $('calMeta').textContent=`Last recalibrated ${CAL.updated} on ${CAL.winters}. Held-out test: storm totals closer to observed in ${CAL.cv.improved} of ${CAL.cv.of} winters.`;

@@ -63,6 +63,20 @@ for(let i=0;i<tb.length;i++){const mo=+tb[i].slice(5,7);if(!(mo>=11||mo<=5))cont
   const pb=pw('base'),pm=pw('mid'),Tb=tt('base'),Tm=tt('mid');if(pb==null||pm==null||Tb==null||Tm==null)continue;sb+=pb*frac(Tb)*slrF(Tb);sm+=pm*frac(Tm)*slrF(Tm)}
 const modelRatio=sm/sb;const elev=Math.min(1.5,Math.max(1,resortRatio/modelRatio));
 
+// 6b. Blend weights: pick the mix of (corrected) models with the lowest held-out error, penalising storm-total bias
+const vals=(r,ff)=>BM.filter(m=>r.m[m]!=null).map(m=>[m,r.m[m]*(ff[m]??1)]);
+const bw=(r,ff,w)=>{let s=0,sw=0;for(const [m,v] of vals(r,ff)){s+=(w[m]||0)*v;sw+=(w[m]||0)}return sw?s/sw:null};
+const sc=(te,ff,w)=>{let n=0,e=0,so=0,sb=0;for(const r of te){const c=bw(r,ff,w);if(c==null)continue;if(r.o>=.05||c>=.05){n++;e+=Math.abs(c-r.o)}if(r.o>=.3){so+=r.o;sb+=c}}return {mae:n?e/n:1,storm:so&&sb?sb/so:1}};
+const fitW=(tr,ff)=>{let w=Object.fromEntries(BM.map(m=>[m,1]));const obj=w2=>{const q=sc(tr,ff,w2);return q.mae*(1+0.5*Math.abs(Math.log(q.storm)))};let best=obj(w);
+  for(let it=0;it<4;it++)for(const m of BM)for(const v of [0,.25,.5,1,1.5,2,3]){const w2={...w,[m]:v};if(Object.values(w2).every(x=>x===0))continue;const o=obj(w2);if(o<best-1e-6){best=o;w=w2}}return w};
+const OLDW=CUR&&CUR.w1?{gfs_hrrr:CUR.w1.gfs_hrrr,ncep_nbm_conus:CUR.w1.ncep_nbm_conus,ecmwf_ifs:CUR.w1.ecmwf_ifs,gfs_global:CUR.w1.gfs_seamless,icon_seamless:CUR.w1.icon_seamless,gem_seamless:CUR.w1.gem_seamless}:W;
+let maeNew=0,maeOld=0,nf2=0;for(const s of seasons){const tr=rows.filter(r=>r.s!==s),te=rows.filter(r=>r.s===s);if(te.length<30)continue;const ff=fitF(tr).f;const fw=fitW(tr,ff);maeNew+=sc(te,ff,fw).mae;maeOld+=sc(te,ff,OLDW).mae;nf2++}
+maeNew/=nf2;maeOld/=nf2;log('weights cv '+maeOld.toFixed(4)+' -> '+maeNew.toFixed(4));
+const wAll=fitW(rows,Object.fromEntries(BM.map(m=>[m,full.f[m]??1])));const wt=Object.values(wAll).reduce((a,b)=>a+b,0);
+const r2w=x=>+(x/wt).toFixed(2);
+const w1=maeNew<=maeOld?{gfs_hrrr:r2w(wAll.gfs_hrrr),ncep_nbm_conus:r2w(wAll.ncep_nbm_conus),ecmwf_ifs:r2w(wAll.ecmwf_ifs),gfs_seamless:r2w(wAll.gfs_global),icon_seamless:r2w(wAll.icon_seamless),gem_seamless:r2w(wAll.gem_seamless)}:(CUR&&CUR.w1)||null;
+let w2=null;if(w1){const b={...w1,gfs_hrrr:0};b.icon_seamless=Math.max(b.icon_seamless,.05);b.gem_seamless=Math.max(b.gem_seamless,.05);const t=Object.values(b).reduce((a,c)=>a+c,0);w2=Object.fromEntries(Object.entries(b).map(([k,v])=>[k,+(v/t).toFixed(2)]))}
+
 // 7. Assemble, keeping the current value for any model without enough history
 const r2=x=>+(+x).toFixed(2);const keep=(id,k)=>CUR&&CUR.models[id]?CUR.models[id][k]:1;
 const M={},nf=full.n;
@@ -75,7 +89,8 @@ M.icon_seamless={f1:one('icon_seamless','icon_seamless','f1'),f2:one('icon_seaml
 M.gem_seamless={f1:one('gem_seamless','gem_seamless','f1'),f2:one('gem_seamless','gem_seamless','f2'),winters:nf.gem_seamless};
 const first=seasons[0],last=seasons[seasons.length-1];const yy=s=>`${s}–${String(s+1).slice(2)}`;
 window.__CAL.result={updated:new Date().toISOString().slice(0,10),winters:`${yy(first)} to ${yy(last)}`,models:M,ens:{ecmwf:M.ecmwf_ifs.f1,gefs:M.gfs_seamless.f2},
-  elev:r2(elev),resortRatio:r2(resortRatio),modelRatio:r2(modelRatio),slr:slr.map(([a,b])=>[a,+b]),slrDays:sp.length,cv:{improved,of}};
+  elev:r2(elev),resortRatio:r2(resortRatio),modelRatio:r2(modelRatio),slr:slr.map(([a,b])=>[a,+b]),slrDays:sp.length,cv:{improved,of},
+  ...(w1?{w1,w2,wcv:{maeOld:+maeOld.toFixed(4),maeNew:+Math.min(maeNew,maeOld).toFixed(4)}}:{})};
 window.__CAL.status='done';
 }catch(e){window.__CAL.status='error';window.__CAL.error=''+e}})();
 'started'
