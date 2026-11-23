@@ -22,12 +22,12 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-u
 .wrap{max-width:1180px;margin:0 auto;padding:0 max(4vw,16px)}
 header{border-bottom:1px solid var(--rule);padding:24px 0 20px}
 .hgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:28px;align-items:center}
-.elev{margin:0}.efig{position:relative;height:250px}.efig>svg{position:absolute;inset:0;width:100%;height:100%}
+.elev{margin:0}.efig{position:relative;height:275px}.efig>svg{position:absolute;inset:0;width:100%;height:100%}
 .elev figcaption{font-size:12px;color:var(--mute);margin-top:4px}
 .rock{fill:var(--panel);stroke:var(--rule2);stroke-width:1}.mk{fill:var(--ink)}.lead{stroke:var(--rule2)}
-.ev{font-size:19px;font-weight:700;fill:var(--blue)}.el{font-size:12px;fill:var(--mute);font-weight:600}.e3{font-size:19px;font-weight:700;fill:var(--ink)}.eu{font-size:11px;fill:var(--mute)}
+.ev{font-size:19px;font-weight:700;fill:var(--blue)}.el{font-size:12px;fill:var(--mute);font-weight:600}.e3{font-size:19px;font-weight:700;fill:var(--ink)}.eu{font-size:11px;fill:var(--mute)}.etd{font-size:19px;font-weight:700;fill:var(--mute)}
 .sline{stroke:var(--red);stroke-dasharray:5 4;stroke-width:1.2}.slt{font-size:11px;fill:var(--red)}
-@media(max-width:760px){.hgrid{grid-template-columns:minmax(0,1fr)}.efig{height:210px}}
+@media(max-width:760px){.hgrid{grid-template-columns:minmax(0,1fr)}.efig{height:250px}}
 .over{color:var(--mute);font-size:13px;margin:0 0 6px}
 h1{font-size:clamp(26px,3.4vw,34px);line-height:1.1;margin:0 0 10px;font-weight:700;letter-spacing:-.01em}
 #summary{font-size:17px;max-width:70ch;margin:0 0 12px}
@@ -116,7 +116,7 @@ footer{border-top:1px solid var(--rule);margin-top:34px;padding:18px 0 40px;colo
   <div class="meta"><span id="status"></span><a href="#" id="refresh">Refresh</a></div>
 </div>
 <figure class="elev"><div class="efig"><svg id="mtn" role="img" aria-label="Snow by elevation: base, mid-mountain and summit"></svg></div>
-<figcaption>New snow by elevation: next 24 hours and next three report mornings</figcaption></figure>
+<figcaption>New snow by elevation: rest of today (until 4 PM, or tonight after lifts close), next 24 hours, and next three report mornings</figcaption></figure>
 </div></header>
 
 <div class="wrap">
@@ -301,7 +301,7 @@ function render(data){
   $('summary').textContent=(snowingNow?'Snow is falling now. ':'')+sum;
   $('status').textContent='Model data as of '+new Date(data.at).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'})+(data.ens?'':' · ensembles unavailable')+(data.nws?'':' · NWS unavailable');
   const s72=[0,1,2].map(k=>mornings.slice(0,3).reduce((s,m)=>s+(m.snow[k]||0),0));
-  drawMountain(next24,s72,pts[1].FL[i0]);
+  drawMountain(next24,s72,pts[1].FL[i0],C.tod?C.tod.snow:[null,null,null],C.tod&&C.tod.mode==='night'?'Tonight':'Today');
   // Key figures
   const m3=mornings.slice(0,3).reduce((s,m)=>s+(m.snow[1]||0),0);
   const k=[
@@ -376,16 +376,17 @@ function drawHours(H){const svg=$('hourChart');const draw=()=>{const W=svg.clien
   g+=line('tb','tl1')+line('ts','tl2');
   svg.innerHTML=g};svg._draw=draw;draw();if(!svg._ro){svg._ro=new ResizeObserver(()=>svg._draw());svg._ro.observe(svg)}}
 
-function drawMountain(s24,s72,fl){const svg=$('mtn');const draw=()=>{const W=svg.clientWidth,H=svg.clientHeight;if(!W)return;
-  const narrow=W<420;const y=ft=>H-10-(ft-9000)/(12800-9000)*(H-128);
+function drawMountain(s24,s72,fl,sTd,tdLab){const svg=$('mtn');const draw=()=>{const W=svg.clientWidth,H=svg.clientHeight;if(!W)return;
+  const narrow=W<420;const y=ft=>H-10-(ft-9000)/(12800-9000)*(H-150);
   const ridge=[[0,y(9200)],[W*.08,y(9450)],[W*.17,y(9600)],[W*.33,y(10250)],[W*.5,y(11000)],[W*.64,y(11850)],[W*.76,y(12550)],[W*.83,y(12800)],[W*.9,y(12550)],[W*.96,y(12200)],[W,y(12000)]];
   const path='M'+ridge.map(p=>p.map(v=>v.toFixed(1)).join(',')).join('L')+`L${W},${H}L0,${H}Z`;
   const yAt=x=>{for(let i=1;i<ridge.length;i++){const[a,b]=ridge[i-1],[c,d]=ridge[i];if(x<=c)return b+(d-b)*(x-a)/(c-a)}return ridge[ridge.length-1][1]};
   let g=`<path d="${path}" class="rock"/>`;
   if(fl!=null){const sl=fl*3.281-1000;if(sl>9300&&sl<13000){const yy=y(sl);g+=`<line x1="0" x2="${W}" y1="${yy}" y2="${yy}" class="sline"/><text x="4" y="${yy-5}" class="slt">Snow line ≈${(Math.round(sl/100)*100).toLocaleString()}′</text>`}}
-  [[W*.17,0,'Base','9,600′'],[W*.5,1,'Mid','11,000′'],[W*.83,2,'Summit','12,800′']].forEach(([x,k,n,ft])=>{const yy=yAt(x);const top=Math.max(narrow?62:66,yy-(narrow?66:74));const anc='middle';const tx=Math.min(Math.max(x,54),W-54);
+  [[W*.17,0,'Base','9,600′'],[W*.5,1,'Mid','11,000′'],[W*.83,2,'Summit','12,800′']].forEach(([x,k,n,ft])=>{const yy=yAt(x);const top=Math.max(narrow?82:86,yy-(narrow?66:74));const anc='middle';const tx=Math.min(Math.max(x,54),W-54);
     g+=`<line x1="${x}" x2="${x}" y1="${top+8}" y2="${yy}" class="lead"/><circle cx="${x}" cy="${yy}" r="3.5" class="mk"/>`+
-      `<text x="${tx}" y="${top-40}" text-anchor="${anc}" class="el">${n} ${ft}</text>`+
+      `<text x="${tx}" y="${top-62}" text-anchor="${anc}" class="el">${n} ${ft}</text>`+
+      `<text x="${tx}" y="${top-40}" text-anchor="${anc}"><tspan class="eu">${tdLab} </tspan><tspan class="etd">${inch(sTd[k])}</tspan></text>`+
       `<text x="${tx}" y="${top-18}" text-anchor="${anc}"><tspan class="eu">24 hr </tspan><tspan class="ev">${inch(s24[k])}</tspan></text>`+
       `<text x="${tx}" y="${top+2}" text-anchor="${anc}"><tspan class="eu">3 days </tspan><tspan class="e3">${inch(s72[k])}</tspan></text>`});
   svg.innerHTML=g};svg._draw=draw;draw();if(!svg._ro){svg._ro=new ResizeObserver(()=>svg._draw());svg._ro.observe(svg)}}
