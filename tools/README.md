@@ -24,6 +24,18 @@
 6. If a GitHub repo is set up for the page (see below), copy the page to the repo as index.html, then commit and push.
 7. Report what changed, or why nothing was applied.
 
+## Daily check against Breck's report (run by the daily scheduled task)
+
+1. In the built-in browser, open https://www.breckenridge.com/the-mountain/mountain-conditions/snow-and-weather-report.aspx
+   and read the "24 HOUR SNOWFALL" figure and its "Updated <date> at <time>" line. Use it only if it's dated today (Mountain time).
+2. Open https://chuckfultz-maker.github.io/breck-forecast/?v=<timestamp>, wait about 8 seconds, then read
+   window.__breck.mornings[0..2]: for each, take d (the report date), k (lead days), snow[1] (mid-mountain), p10, p90 and nws.
+3. Write record.json, e.g. {"logged":"<today>","actual":{"date":"<today>","inches":<24h>},"forecasts":[{"target":d,"lead":k,"mid":..,"p10":..,"p90":..,"nws":..}]}
+   (write it with a short python script; don't hand-type numbers), then run:
+   python3 log_day.py verification.csv record.json
+4. Copy verification.csv to the GitHub repo's tools/ folder and push (see GitHub below). The page's Track record section reads it.
+5. Only message Chuck if something failed. The monthly recalibration uses verification.csv automatically (apply_cal.py reads it).
+
 ## GitHub
 Repo: chuckfultz-maker/breck-forecast (public). Live site: https://chuckfultz-maker.github.io/breck-forecast/
 To publish after a calibration is applied: call add_repo (owner chuckfultz-maker, repo breck-forecast, access push),

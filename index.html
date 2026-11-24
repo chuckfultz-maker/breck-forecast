@@ -93,6 +93,8 @@ h3.sub{font-size:15px;margin:22px 0 2px;font-weight:700}
 @media(max-width:1000px){.d3{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.d4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.d3{grid-template-columns:minmax(0,1fr)}}
+.kpis.tr{border-top:1px solid var(--rule);margin-bottom:12px}
+td.good{color:var(--blue);font-weight:600}td.bad{color:var(--red);font-weight:600}
 .legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--mute);margin:8px 0 0}
 .legend i{display:inline-block;width:14px;height:10px;margin-right:6px;vertical-align:-1px;border-radius:2px}
 .legend .ln{height:2px;vertical-align:3px}
@@ -157,6 +159,13 @@ footer{border-top:1px solid var(--rule);margin-top:34px;padding:18px 0 40px;colo
     </details>
   </section>
 
+  <section id="trackSec">
+    <h2>Track record</h2>
+    <p class="note">Each morning this page's forecast for the next 5 AM report is logged, then checked against the 24-hour total Breck actually reports. Once there are 20 or more checked mornings, the monthly recalibration nudges the forecast toward Breck's own numbers.</p>
+    <div class="kpis tr" id="trackKpis"></div>
+    <div class="scroll"><table><thead><tr><th>Report morning</th><th class="num">This forecast</th><th class="num">Range</th><th class="num">NWS</th><th class="num">Breck reported</th><th class="num">Miss</th></tr></thead><tbody id="trackBody"></tbody></table></div>
+  </section>
+
   <section>
     <h2>Model comparison</h2>
     <p class="note">Mid-mountain snow by report morning from each model after its Breckenridge correction, all run through the same snow-ratio math. When the rows disagree widely, rely on the range.</p>
@@ -180,7 +189,7 @@ footer{border-top:1px solid var(--rule);margin-top:34px;padding:18px 0 40px;colo
 {
 const PTS=[{n:'Base',ft:9600,lat:39.4808,lon:-106.0670},{n:'Mid',ft:11000,lat:39.4740,lon:-106.0900},{n:'Summit',ft:12800,lat:39.4660,lon:-106.1060}];
 // CALIBRATION: this one line is rewritten by the monthly recalibration (calibrate.js + apply_cal.py)
-const CAL={"updated":"2026-11-21","winters":"2016–17 to 2025–26","models":{"gfs_hrrr":{"f1":1.43,"f2":1.43,"winters":9},"ncep_nbm_conus":{"f1":1,"f2":1,"winters":2},"ecmwf_ifs":{"f1":0.94,"f2":0.94,"winters":10},"gfs_seamless":{"f1":1.43,"f2":0.96,"winters":6},"icon_seamless":{"f1":1.06,"f2":1.06,"winters":4},"gem_seamless":{"f1":0.96,"f2":0.96,"winters":4}},"ens":{"ecmwf":0.94,"gefs":0.96},"elev":1.13,"resortRatio":1.58,"modelRatio":1.39,"slr":[[-10,12.3],[3,12.3],[12.5,12.2],[17.5,13.8],[22,13.7],[26,13.1],[29.5,11.5],[32.5,9.7],[36,6]],"slrDays":375,"cv":{"improved":9,"of":10},"w1":{"gfs_hrrr":0.25,"ncep_nbm_conus":0.25,"ecmwf_ifs":0.38,"gfs_seamless":0.12,"icon_seamless":0,"gem_seamless":0},"w2":{"gfs_hrrr":0,"ncep_nbm_conus":0.29,"ecmwf_ifs":0.45,"gfs_seamless":0.14,"icon_seamless":0.06,"gem_seamless":0.06},"wcv":{"maeOld":0.0948,"maeNew":0.0896}};
+const CAL={"updated":"2026-11-21","winters":"2016–17 to 2025–26","models":{"gfs_hrrr":{"f1":1.43,"f2":1.43,"winters":9},"ncep_nbm_conus":{"f1":1,"f2":1,"winters":2},"ecmwf_ifs":{"f1":0.94,"f2":0.94,"winters":10},"gfs_seamless":{"f1":1.43,"f2":0.96,"winters":6},"icon_seamless":{"f1":1.06,"f2":1.06,"winters":4},"gem_seamless":{"f1":0.96,"f2":0.96,"winters":4}},"ens":{"ecmwf":0.94,"gefs":0.96},"elev":1.13,"resortRatio":1.58,"modelRatio":1.39,"slr":[[-10,12.3],[3,12.3],[12.5,12.2],[17.5,13.8],[22,13.7],[26,13.1],[29.5,11.5],[32.5,9.7],[36,6]],"slrDays":375,"cv":{"improved":9,"of":10},"w1":{"gfs_hrrr":0.25,"ncep_nbm_conus":0.25,"ecmwf_ifs":0.38,"gfs_seamless":0.12,"icon_seamless":0,"gem_seamless":0},"w2":{"gfs_hrrr":0,"ncep_nbm_conus":0.29,"ecmwf_ifs":0.45,"gfs_seamless":0.14,"icon_seamless":0.06,"gem_seamless":0.06},"wcv":{"maeOld":0.0948,"maeNew":0.0896},"reportAdj":1,"reportDays":1};
 const MODELS=[{id:'gfs_hrrr',n:'HRRR',w1:.35,w2:0},{id:'ncep_nbm_conus',n:'Natl Blend',w1:.25,w2:.30},{id:'ecmwf_ifs',n:'ECMWF',w1:.20,w2:.35},{id:'gfs_seamless',n:'GFS',w1:.10,w2:.15},{id:'icon_seamless',n:'ICON',w1:.05,w2:.10},{id:'gem_seamless',n:'GEM',w1:.05,w2:.10}].map(m=>({...m,...CAL.models[m.id],...(CAL.w1?{w1:CAL.w1[m.id]??m.w1,w2:CAL.w2[m.id]??m.w2}:{})}));
 const ENSF=CAL.ens;
 const ELEVF=[1,CAL.elev,CAL.elev];
@@ -203,7 +212,7 @@ function dirSector(d){if(d==null)return null;return ['N','NE','E','SE','S','SW',
 const SLRPTS=CAL.slr;
 function slr(T){if(T<=SLRPTS[0][0])return SLRPTS[0][1];for(let i=1;i<SLRPTS.length;i++){const[a,b]=SLRPTS[i-1],[c,d]=SLRPTS[i];if(T<=c)return b+(d-b)*(T-a)/(c-a)}return 6}
 function snowFrac(T){return T<=34?1:T>=40?0:(40-T)/6}
-function snowFrom(P,T,G,dir){if(!P||P<=0||T==null)return 0;let s=P*snowFrac(T)*slr(T);if(G!=null&&G>35)s*=.85;const c=CORR.byDir[dirSector(dir)]??1;return s*c}
+function snowFrom(P,T,G,dir){if(!P||P<=0||T==null)return 0;let s=P*snowFrac(T)*slr(T);if(G!=null&&G>35)s*=.85;const c=CORR.byDir[dirSector(dir)]??1;return s*c*(CAL.reportAdj||1)}
 
 function pct(arr,p){const a=arr.filter(x=>x!=null).sort((x,y)=>x-y);if(!a.length)return null;const i=(a.length-1)*p,lo=Math.floor(i),hi=Math.ceil(i);return a[lo]+(a[hi]-a[lo])*(i-lo)}
 const f1=x=>x==null?'–':(x<0.05?'0':x<10?x.toFixed(1):Math.round(x)+'');
@@ -428,6 +437,22 @@ function calNotes(){const M=CAL.models,f=x=>'×'+(+x).toFixed(2);
   $('slrNote').textContent=`Fit to ${CAL.slrDays} measured snow days: `+CAL.slr.slice(1).map(([t,r])=>`${Math.round(r)}:1 at ${Math.round(t)}°F`).join(', ')+'.';
 }
 calNotes();
+async function loadTrack(){try{const r=await fetch('tools/verification.csv',{cache:'no-store'});if(!r.ok)throw 0;const t=await r.text();
+  const L=t.trim().split(/\r?\n/);const h=L[0].split(',');const rows=L.slice(1).map(l=>{const v=l.split(',');return Object.fromEntries(h.map((k,i)=>[k,v[i]]))});
+  const v=rows.filter(x=>x.lead_days==='1'&&x.actual!==''&&x.fc_mid!=='').sort((a,b)=>a.target_date<b.target_date?1:-1);
+  if(!v.length){$('trackSec').style.display='none';return}
+  const n=v.length,f=x=>+x;const mae=v.reduce((q,x)=>q+Math.abs(f(x.fc_mid)-f(x.actual)),0)/n;
+  const inR=v.filter(x=>x.fc_p10!==''&&f(x.actual)>=f(x.fc_p10)-.05&&f(x.actual)<=f(x.fc_p90)+.05).length;
+  const vn=v.filter(x=>x.fc_nws!=='');const maeN=vn.length?vn.reduce((q,x)=>q+Math.abs(f(x.fc_nws)-f(x.actual)),0)/vn.length:null;const maeO=vn.length?vn.reduce((q,x)=>q+Math.abs(f(x.fc_mid)-f(x.actual)),0)/vn.length:null;
+  const bias=v.reduce((q,x)=>q+f(x.fc_mid),0)/Math.max(.1,v.reduce((q,x)=>q+f(x.actual),0));
+  $('trackKpis').innerHTML=[['Mornings checked',n,n<20?`${20-n} more before it adjusts itself`:`Adjustment now ×${(CAL.reportAdj||1).toFixed(2)}`],
+    ['Average miss',inch(mae),'this forecast vs Breck report'],
+    ['NWS average miss',maeN==null?'–':inch(maeN),maeN==null?'no NWS numbers logged yet':`same mornings: this forecast ${inch(maeO)}`],
+    ['Inside the range',pctf(inR/n),`forecast total ${bias>=1?'+':''}${Math.round(100*(bias-1))}% vs reported`]]
+    .map(([l,val,s2])=>`<div class="kpi"><div class="kl">${l}</div><div class="kv">${val}</div><div class="ks">${s2}</div></div>`).join('');
+  $('trackBody').innerHTML=v.slice(0,21).map(x=>{const d=f(x.fc_mid)-f(x.actual);return `<tr><td class="day">${dlabel(x.target_date)}</td><td class="num">${inch(f(x.fc_mid))}</td><td class="num">${x.fc_p10!==''?inch(f(x.fc_p10))+'–'+inch(f(x.fc_p90)):'–'}</td><td class="num">${x.fc_nws!==''?inch(f(x.fc_nws)):'–'}</td><td class="num"><b>${inch(f(x.actual))}</b></td><td class="num ${Math.abs(d)<=1?'good':Math.abs(d)>=3?'bad':''}">${d>0?'+':''}${d.toFixed(1)}″</td></tr>`}).join('');
+ }catch(e){$('trackSec').style.display='none'}}
+loadTrack();
 $('refresh').addEventListener('click',e=>{e.preventDefault();load()});
 try{const c=JSON.parse(localStorage.getItem('breckfx')||'null');if(c)render(c)}catch(e){}
 load();setInterval(load,30*60e3);

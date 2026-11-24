@@ -6,7 +6,7 @@ Replaces the single `const CAL=...;` line. Refuses changes that look broken
 (any model factor moving more than 30% in one run, or values out of range),
 so a bad data month can't wreck the forecast. Prints what changed.
 """
-import json, re, sys
+import json, os, re, sys
 
 cal_path, page_path = sys.argv[1], sys.argv[2]
 new = json.load(open(cal_path))
@@ -36,6 +36,18 @@ for key in ("w1", "w2"):
         continue
     if any(v < 0 for v in w.values()) or not (0.95 <= sum(w.values()) <= 1.05):
         problems.append(f"{key} blend weights look wrong: {w}")
+# Breck-report adjustment: compare this page's next-morning forecasts with Breck's own 5 AM reports
+# (verification.csv beside this script). Needs 20+ checked mornings; shrunk toward no change; capped at +/-25%.
+import csv, math
+vpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "verification.csv")
+new["reportAdj"] = old.get("reportAdj", 1)
+if os.path.exists(vpath):
+    vr = [r for r in csv.DictReader(open(vpath)) if r.get("lead_days") == "1" and r.get("actual") and r.get("fc_mid")]
+    new["reportDays"] = len(vr)
+    if len(vr) >= 20:
+        sa = sum(float(r["actual"]) for r in vr); sf = sum(float(r["fc_mid"]) for r in vr)
+        ratio = (sa + 10) / (sf + 10)
+        new["reportAdj"] = round(min(1.25, max(0.75, old.get("reportAdj", 1) * ratio)), 2)
 if problems:
     print("NOT APPLIED:\n  " + "\n  ".join(problems))
     sys.exit(2)
@@ -52,6 +64,8 @@ for mid, v in new["models"].items():
 for k in ("w1", "w2"):
     if new.get(k) != old.get(k):
         print(f"  blend weights {k}: {old.get(k)} -> {new.get(k)}")
+if new.get("reportAdj") != old.get("reportAdj", 1):
+    print(f"  Breck-report adjustment: {old.get('reportAdj', 1)} -> {new['reportAdj']} ({new.get('reportDays')} checked mornings)")
 for k in ("elev", "resortRatio", "modelRatio", "slrDays"):
     if new[k] != old[k]:
         print(f"  {k}: {old[k]} -> {new[k]}")
