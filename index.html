@@ -118,15 +118,15 @@ footer{border-top:1px solid var(--rule);margin-top:34px;padding:18px 0 40px;colo
   <div class="meta"><span id="status"></span><a href="#" id="refresh">Refresh</a></div>
 </div>
 <figure class="elev"><div class="efig"><svg id="mtn" role="img" aria-label="Snow by elevation: base, mid-mountain and summit"></svg></div>
-<figcaption>New snow by elevation: rest of today (until 4 PM, or tonight after lifts close), next 24 hours, and next three report mornings</figcaption></figure>
+<figcaption>New snow by elevation: rest of today (until 4 PM, or tonight after lifts close), next 24 hours, and next 3 days</figcaption></figure>
 </div></header>
 
 <div class="wrap">
   <div class="kpis" id="kpis"></div>
 
   <section>
-    <h2>Today and the next 3 report mornings</h2>
-    <p class="note">The Today card covers the rest of the ski day, plus tonight. Each morning card is the 24 hours ending at that 5 AM snow report, the window Breck reports, so tonight's snow counts toward tomorrow's card. The large figure is mid-mountain; the bar shows the 10–90% range, with the tick marking this forecast.</p>
+    <h2>Today and the next 3 days</h2>
+    <p class="note">Cards are labeled by when the snow falls. “Sat → Sun 5 AM” is snow falling Saturday and Saturday night, which shows up on Breck's Sunday-morning report. The Today card covers the rest of the ski day, plus tonight. The large figure is mid-mountain; the bar shows the 10–90% range, with the tick marking this forecast.</p>
     <div class="d3" id="days3"></div>
   </section>
 
@@ -135,7 +135,7 @@ footer{border-top:1px solid var(--rule);margin-top:34px;padding:18px 0 40px;colo
     <p class="note">At this range a single number isn't reliable. Each card shows the likely range at mid-mountain and the odds of 1″+ and 6″+ from 82 ensemble runs.</p>
     <div class="d4" id="days47"></div>
     <details><summary>Full 7-day table</summary>
-    <div class="scroll"><table class="wk"><thead><tr><th>Report</th><th class="num">Mid-mtn</th><th>Range</th><th class="num">10–90%</th><th class="num">1″+</th><th class="num">6″+</th><th class="num">Base / Top</th><th class="num">Ratio</th><th class="num">Base hi / Top lo</th><th class="num">Top gust</th><th class="num">NWS</th></tr></thead><tbody id="week"></tbody></table></div>
+    <div class="scroll"><table class="wk"><thead><tr><th>Snow falls</th><th class="num">Mid-mtn</th><th>Range</th><th class="num">10–90%</th><th class="num">1″+</th><th class="num">6″+</th><th class="num">Base / Top</th><th class="num">Ratio</th><th class="num">Base hi / Top lo</th><th class="num">Top gust</th><th class="num">NWS</th></tr></thead><tbody id="week"></tbody></table></div>
     </details>
   </section>
 
@@ -294,6 +294,7 @@ function compute(data){
 }
 
 const dlabel=d=>`${dow(d)} ${+d.slice(5,7)}/${+d.slice(8,10)}`;
+const falls=m=>{const p=addDays(m.d,-1);return `${dow(p)} → ${dow(m.d)} 5 AM`};
 const deg=x=>x==null||!isFinite(x)?'–':Math.round(x)+'°';
 const pctf=x=>x==null?'–':Math.round(100*x)+'%';
 const mph=x=>x==null||!isFinite(x)?'–':Math.round(x);
@@ -306,7 +307,7 @@ function render(data){
   const snowingNow=(pts[1].S[i0]||0)>0.05||(pts[1].S[i0+1]||0)>0.05;
   let sum;
   if(!best||(best.snow[1]||0)<1)sum='No significant snow expected in the next seven days.';
-  else sum=`Largest expected snowfall: ${dlabel(best.d)} report, ${inch(best.snow[1])} mid-mountain (range ${inch(best.p10)}–${inch(best.p90)}). Seven-day total about ${inch(wk)}.`;
+  else sum=`Largest expected snowfall: ${dow(addDays(best.d,-1))} into ${dow(best.d)} morning, ${inch(best.snow[1])} mid-mountain (range ${inch(best.p10)}–${inch(best.p90)}). Seven-day total about ${inch(wk)}.`;
   $('summary').textContent=(snowingNow?'Snow is falling now. ':'')+sum;
   $('status').textContent='Model data as of '+new Date(data.at).toLocaleString([], {weekday:'short',hour:'numeric',minute:'2-digit'})+(data.ens?'':' · ensembles unavailable')+(data.nws?'':' · NWS unavailable');
   const s72=[0,1,2].map(k=>mornings.slice(0,3).reduce((s,m)=>s+(m.snow[k]||0),0));
@@ -315,8 +316,8 @@ function render(data){
   const m3=mornings.slice(0,3).reduce((s,m)=>s+(m.snow[1]||0),0);
   const k=[
     ['Next 24 hours',inch(next24[1]),`Base ${inch(next24[0])} · Summit ${inch(next24[2])}`],
-    ['Next 3 report mornings',inch(m3),mornings.slice(0,3).map(m=>`${dow(m.d)} ${inch(m.snow[1])}`).join(' · ')],
-    ['Best chance of 6″+',best&&best.prob6!=null?pctf(Math.max(...mornings.map(m=>m.prob6||0))):'–',(()=>{const b=mornings.reduce((a,m)=>(m.prob6||0)>(a?a.prob6||0:-1)?m:a,null);return b&&b.prob6?`${dlabel(b.d)} report`:'No day above 0%'})()],
+    ['Next 3 days',inch(m3),mornings.slice(0,3).map(m=>`${dow(addDays(m.d,-1))} ${inch(m.snow[1])}`).join(' · ')],
+    ['Best chance of 6″+',best&&best.prob6!=null?pctf(Math.max(...mornings.map(m=>m.prob6||0))):'–',(()=>{const b=mornings.reduce((a,m)=>(m.prob6||0)>(a?a.prob6||0:-1)?m:a,null);return b&&b.prob6?`${falls(b)}`:'No day above 0%'})()],
     ['Max summit gust, 48 hrs',C.gust48==null?'–':mph(C.gust48)+' mph',C.gust48>=45?'Upper-lift wind holds likely':C.gust48>=35?'Upper-lift wind holds possible':'No wind-hold concern']
   ];
   $('kpis').innerHTML=k.map(([l,v,s],j)=>`<div class="kpi${j===3&&C.gust48>=35?' warn':''}"><div class="kl">${l}</div><div class="kv">${v}</div><div class="ks">${s}</div></div>`).join('');
@@ -325,7 +326,7 @@ function render(data){
   const bar=m=>{const w=x=>Math.min(100,100*(x||0)/scale);return `<div class="rb" title="10–90% range ${inch(m.p10)}–${inch(m.p90)}"><i style="left:${w(m.p10)}%;width:${Math.max(.8,w(m.p90)-w(m.p10))}%"></i><b style="left:${w(m.snow[1])}%"></b></div>`};
   $('week').innerHTML=mornings.map((m,j)=>{const lo=j>=3;const wind=m.gust>=45?'<span class="flag">Hold likely</span>':m.gust>=35?'<span class="flag soft">Hold possible</span>':'';
     return `${j===3?'<tr class="sep"><td colspan="11">Days 4–7 · lower confidence: use the odds and range rather than the single number</td></tr>':''}<tr class="${lo?'lo':''}">
-    <td class="day">${dlabel(m.d)}</td><td class="num main">${inch(m.snow[1])}</td><td class="barc">${bar(m)}</td><td class="num">${inch(m.p10)}–${inch(m.p90)}</td>
+    <td class="day">${falls(m)}</td><td class="num main">${inch(m.snow[1])}</td><td class="barc">${bar(m)}</td><td class="num">${inch(m.p10)}–${inch(m.p90)}</td>
     <td class="num">${pctf(m.prob1)}</td><td class="num">${pctf(m.prob6)}</td><td class="num">${inch(m.snow[0])} / ${inch(m.snow[2])}</td>
     <td class="num">${m.slr?Math.round(m.slr)+':1':'–'}</td><td class="num">${deg(m.hi)} / ${deg(m.lo)}</td><td class="num">${mph(m.gust)} ${wind}</td><td class="num">${inch(m.nws)}</td></tr>`}).join('');
   // Day cards
@@ -342,14 +343,14 @@ function render(data){
     <div class="el3l"><span>Base</span><span>Mid</span><span>Summit</span></div>
     <div class="dm">${day?`<span>Tonight (4 PM–5 AM)</span><span>${inch(T.tonight)}</span>`:''}<span>${day?'High at base':'Low at summit'}</span><span>${day?deg(T.hi):deg(T.lo)}</span><span>Summit gust</span><span>${T.gust==null||!isFinite(T.gust)?'–':mph(T.gust)+' mph'} ${flag(T.gust)}</span><span>Snow ratio</span><span>${T.slr?Math.round(T.slr)+':1':'–'}</span></div></div>`}
   $('days3').innerHTML=todCard+d3m.map(m=>{const w=x=>Math.min(100,100*(x||0)/scale);const h=x=>Math.max(2,100*(x||0)/emax);
-    return `<div class="dc"><div class="dh"><span class="dd">${dlabel(m.d)}</span><span class="dt">5 AM report</span></div>
+    return `<div class="dc"><div class="dh"><span class="dd">${falls(m)}</span><span class="dt">on ${dow(m.d)} report</span></div>
     <div class="dv">${inch(m.snow[1])}<small>mid-mountain</small></div>
     <div class="rb" style="margin-top:8px"><i style="left:${w(m.p10)}%;width:${Math.max(.8,w(m.p90)-w(m.p10))}%"></i><b style="left:${w(m.snow[1])}%"></b></div>
     <div class="rl"><span>Range ${inch(m.p10)}–${inch(m.p90)}</span><span>1″+ ${pctf(m.prob1)} · 6″+ ${pctf(m.prob6)}</span></div>
     <div class="el3">${m.snow.map(x=>`<div><b>${inch(x)}</b><i style="height:${h(x)}%"></i></div>`).join('')}</div>
     <div class="el3l"><span>Base</span><span>Mid</span><span>Summit</span></div>
     <div class="dm"><span>Base high / summit low</span><span>${deg(m.hi)} / ${deg(m.lo)}</span><span>Summit gust</span><span>${m.gust==null||!isFinite(m.gust)?'–':mph(m.gust)+' mph'} ${flag(m.gust)}</span><span>Snow ratio</span><span>${m.slr?Math.round(m.slr)+':1':'–'}</span><span>NWS forecast</span><span>${inch(m.nws)}</span></div></div>`}).join('');
-  $('days47').innerHTML=mornings.slice(3,7).map(m=>`<div class="dc lo4"><div class="dh"><span class="dd">${dlabel(m.d)}</span><span class="dt">5 AM report</span></div>
+  $('days47').innerHTML=mornings.slice(3,7).map(m=>`<div class="dc lo4"><div class="dh"><span class="dd">${falls(m)}</span><span class="dt">on ${dow(m.d)} report</span></div>
     <div class="big4">${inch(m.p10)}–${inch(m.p90)}</div><div class="dt">likely range, mid-mountain</div>
     <div class="pr"><div class="pl"><span>1″+</span><b>${pctf(m.prob1)}</b></div><div class="pb"><i style="width:${100*(m.prob1||0)}%"></i></div></div>
     <div class="pr"><div class="pl"><span>6″+</span><b>${pctf(m.prob6)}</b></div><div class="pb six"><i style="width:${100*(m.prob6||0)}%"></i></div></div>
@@ -363,7 +364,7 @@ function render(data){
   $('hourly').innerHTML=rows.join('');
   drawHours(H);drawWind(H);drawCum(C);
   // Models
-  $('mhead').innerHTML=`<tr><th>Model</th>${mornings.map(m=>`<th class="num">${dlabel(m.d)}</th>`).join('')}</tr>`;
+  $('mhead').innerHTML=`<tr><th>Model</th>${mornings.map(m=>`<th class="num">${falls(m)}</th>`).join('')}</tr>`;
   const mrow=(n,vals,cls='')=>`<tr class="${cls}"><td class="day">${n}</td>${vals.map(v=>`<td class="num">${inch(v)}</td>`).join('')}</tr>`;
   $('mbody').innerHTML=MODELS.map((md,j)=>mrow(md.n,mornings.map(m=>m.models[j]))).join('')+mrow('NWS Boulder',mornings.map(m=>m.nws))+mrow('Ensemble median',mornings.map(m=>m.p50))+mrow('This forecast',mornings.map(m=>m.snow[1]),'tot');
 }
